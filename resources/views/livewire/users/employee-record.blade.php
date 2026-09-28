@@ -33,7 +33,7 @@
         <span class="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white text-indigo-600 shadow-xs ring-1 ring-indigo-100"><x-icon name="id-card" class="size-6" /></span>
         <div class="min-w-0 flex-1">
             <h2 class="font-semibold text-slate-900">Employee record</h2>
-            <p class="flex items-center gap-1.5 text-xs text-slate-500"><x-icon name="shield" class="size-3.5" /> Private: only super admins and {{ $user->is(auth()->user()) ? 'you' : \Illuminate\Support\Str::before($user->name, ' ') }} can see this</p>
+            <p class="flex items-center gap-1.5 text-xs text-slate-500"><x-icon name="shield" class="size-3.5" /> Private: only {{ $user->isMember() ? 'admins, super admins' : 'super admins' }} and {{ $user->is(auth()->user()) ? 'you' : \Illuminate\Support\Str::before($user->name, ' ') }} can see this</p>
         </div>
         @if ($canManage)
             <div class="w-40" title="{{ $completeness['missing'] ? 'Missing: '.implode(', ', $completeness['missing']) : 'Complete' }}">

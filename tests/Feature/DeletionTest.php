@@ -47,17 +47,22 @@ class DeletionTest extends TestCase
         $this->assertSame('Deleted user', $comment->user->name);
     }
 
-    public function test_only_super_admins_delete_people_and_never_themselves(): void
+    public function test_who_can_delete_people(): void
     {
         $super = User::factory()->superAdmin()->create();
         $admin = User::factory()->admin()->create();
+        $otherAdmin = User::factory()->admin()->create();
         $member = User::factory()->create();
 
         $this->assertFalse($super->can('delete', $super));
-        $this->assertFalse($admin->can('delete', $member));
         $this->assertTrue($super->can('delete', $member));
+        $this->assertTrue($admin->can('delete', $member));
+        $this->assertFalse($admin->can('delete', $otherAdmin));
+        $this->assertFalse($admin->can('delete', $super));
+        $this->assertFalse($member->can('delete', User::factory()->create()));
 
-        Livewire::actingAs($admin)->test(People::class)->call('delete', $member->id)->assertForbidden();
+        Livewire::actingAs($admin)->test(People::class)->call('delete', $member->id)->assertHasNoErrors();
+        $this->assertModelMissing($member);
     }
 
     public function test_meeting_delete_notifies_upcoming_participants(): void

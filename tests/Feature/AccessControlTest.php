@@ -64,28 +64,26 @@ class AccessControlTest extends TestCase
         $this->assertEquals([$mine->id], Project::visibleTo($member)->pluck('id')->all());
     }
 
-    public function test_admin_sees_department_projects_but_not_others(): void
+    public function test_admins_see_and_manage_projects_in_every_department(): void
     {
-        $department = Department::factory()->create();
-        $admin = User::factory()->admin()->create(['department_id' => $department->id]);
-        $inDept = Project::factory()->create(['department_id' => $department->id]);
-        $elsewhere = Project::factory()->create();
+        $admin = User::factory()->admin()->create(['department_id' => Department::factory()->create()->id]);
+        $elsewhere = Project::factory()->create(['department_id' => Department::factory()->create()->id]);
 
-        $this->assertTrue($admin->can('update', $inDept));
-        $this->assertFalse($admin->can('view', $elsewhere));
+        $this->assertTrue($admin->can('view', $elsewhere));
+        $this->assertTrue($admin->can('update', $elsewhere));
     }
 
-    public function test_admin_can_only_manage_members_of_own_department(): void
+    public function test_admins_manage_members_in_any_department_but_not_other_admins(): void
     {
         $dept = Department::factory()->create();
         $admin = User::factory()->admin()->create(['department_id' => $dept->id]);
-        $ownMember = User::factory()->create(['department_id' => $dept->id]);
         $otherMember = User::factory()->create(['department_id' => Department::factory()->create()->id]);
         $otherAdmin = User::factory()->admin()->create(['department_id' => $dept->id]);
+        $super = User::factory()->superAdmin()->create();
 
-        $this->assertTrue($admin->can('update', $ownMember));
-        $this->assertFalse($admin->can('update', $otherMember));
+        $this->assertTrue($admin->can('update', $otherMember));
         $this->assertFalse($admin->can('update', $otherAdmin));
+        $this->assertFalse($admin->can('update', $super));
     }
 
     public function test_attachment_download_requires_task_access(): void

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\ActivityLogger;
 use App\Services\UserService;
 use App\Support\Settings;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
@@ -69,7 +70,7 @@ class Index extends Component
     {
         $this->authorize('create', User::class);
         $this->reset('editingId', 'name', 'email', 'password', 'role', 'job_title', 'skills', 'is_active');
-        $this->department_id = auth()->user()->isAdmin() ? auth()->user()->department_id : null;
+        $this->department_id = null;
         $this->resetValidation();
         $this->showForm = true;
     }
@@ -110,11 +111,6 @@ class Index extends Component
         $role = Role::from($data['role']);
         abort_unless($actor->can('assignRole', [User::class, $role]), 403);
 
-        // Admins can only place people in departments they look after.
-        if ($actor->isAdmin() && ! in_array((int) $data['department_id'], $actor->departmentScopeIds(), true)) {
-            $data['department_id'] = $actor->department_id;
-        }
-
         // Nobody can deactivate or demote themselves.
         if ($user?->is($actor)) {
             $data['is_active'] = true;
@@ -132,7 +128,7 @@ class Index extends Component
             $user->update($data);
 
             if ($passwordChanged || ! $user->is_active) {
-                \Illuminate\Support\Facades\DB::table('sessions')->where('user_id', $user->id)->delete();
+                DB::table('sessions')->where('user_id', $user->id)->delete();
             }
             $activity->log($actor, 'user.updated', "updated {$user->name}'s profile", $user);
         } else {
@@ -174,7 +170,7 @@ class Index extends Component
 
         $users = User::manageableBy($actor)
             ->with('department')
-            ->when($actor->isSuperAdmin(), fn ($q) => $q->with('employeeProfile')->withCount('employeeDocuments'))
+            ->when($actor->isManager(), fn ($q) => $q->with('employeeProfile')->withCount('employeeDocuments'))
             ->when($this->search, fn ($q) => $q->where(fn ($q) => $q
                 ->where('name', 'like', "%{$this->search}%")
                 ->orWhere('email', 'like', "%{$this->search}%")
@@ -187,9 +183,7 @@ class Index extends Component
 
         return view('livewire.users.index', [
             'users' => $users,
-            'departments' => Department::orderBy('name')
-                ->when($actor->isAdmin(), fn ($q) => $q->whereKey($actor->departmentScopeIds()))
-                ->get(['id', 'name']),
+            'departments' => Department::orderBy('name')->get(['id', 'name']),
             'roles' => $actor->isSuperAdmin() ? Role::cases() : [Role::Member],
             'actor' => $actor,
         ]);

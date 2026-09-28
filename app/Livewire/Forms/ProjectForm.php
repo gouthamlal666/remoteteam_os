@@ -54,12 +54,7 @@ class ProjectForm extends Form
             'name' => ['required', 'string', 'max:150'],
             'client' => ['nullable', 'string', 'max:150'],
             'description' => ['nullable', 'string', 'max:5000'],
-            'department_id' => ['nullable', 'exists:departments,id', function ($attribute, $value, $fail) {
-                $user = auth()->user();
-                if ($value && $user?->isAdmin() && ! in_array((int) $value, $user->departmentScopeIds(), true)) {
-                    $fail('You can only use departments you manage.');
-                }
-            }],
+            'department_id' => ['nullable', 'exists:departments,id'],
             'status' => ['required', new Enum(ProjectStatus::class)],
             'color' => ['required', Rule::in(self::COLORS)],
             'start_date' => ['nullable', 'date'],

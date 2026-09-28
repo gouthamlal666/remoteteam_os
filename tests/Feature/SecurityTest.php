@@ -10,7 +10,6 @@ use App\Livewire\Projects\Index as Projects;
 use App\Livewire\Settings;
 use App\Livewire\Users\Index as People;
 use App\Models\Department;
-use App\Models\Project;
 use App\Models\User;
 use App\Services\ChatService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -124,28 +123,27 @@ class SecurityTest extends TestCase
             ->assertHeader('Content-Security-Policy');
     }
 
-    public function test_admins_cannot_create_projects_in_departments_they_dont_manage(): void
+    public function test_admins_can_create_projects_in_any_department(): void
     {
-        [$mine, $theirs] = Department::factory()->count(2)->create();
-        $admin = User::factory()->admin()->create(['department_id' => $mine->id]);
+        $admin = User::factory()->admin()->create(['department_id' => Department::factory()->create()->id]);
+        $other = Department::factory()->create();
 
         Livewire::actingAs($admin)->test(Projects::class)
             ->call('create')
-            ->set('form.name', 'Sneaky')
-            ->set('form.department_id', $theirs->id)
+            ->set('form.name', 'Cross-team site')
+            ->set('form.department_id', $other->id)
             ->call('saveProject')
-            ->assertHasErrors('form.department_id');
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('projects', ['name' => 'Cross-team site', 'department_id' => $other->id]);
     }
 
-    public function test_meetings_cannot_be_linked_to_projects_the_organiser_cannot_see(): void
+    public function test_meetings_cannot_be_linked_to_unknown_projects(): void
     {
-        $admin = User::factory()->admin()->create();
-        $hidden = Project::factory()->create();
-
-        Livewire::actingAs($admin)->test(Meetings::class)
+        Livewire::actingAs(User::factory()->admin()->create())->test(Meetings::class)
             ->call('create')
             ->set('form.title', 'Sync')
-            ->set('form.project_id', $hidden->id)
+            ->set('form.project_id', 999999)
             ->set('form.participant_ids', [(string) User::factory()->create()->id])
             ->call('save')
             ->assertHasErrors('form.project_id');

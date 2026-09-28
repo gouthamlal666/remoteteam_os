@@ -11,7 +11,7 @@
                 <button wire:click="$set('tab', '{{ $value }}')" @class(['rounded-md px-3 py-1.5 font-medium', 'bg-indigo-600 text-white' => $tab === $value, 'text-slate-600 hover:bg-slate-50' => $tab !== $value])>{{ $label }}</button>
             @endforeach
         </div>
-        @if ($user->isSuperAdmin() && $tab !== 'mine')
+        @if ($user->isManager() && $tab !== 'mine')
             <select wire:model.live="department" class="input w-auto">
                 <option value="">All departments</option>
                 @foreach ($departments as $d)

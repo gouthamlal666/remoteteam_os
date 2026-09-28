@@ -224,23 +224,6 @@ class User extends Authenticatable
             ->map(fn ($part) => Str::upper(Str::substr($part, 0, 1)))->implode('');
     }
 
-    public function managedDepartments(): HasMany
-    {
-        return $this->hasMany(Department::class, 'manager_id');
-    }
-
-    /**
-     * Departments an admin looks after: the one they belong to plus every
-     * department they are the manager of (an admin can manage several).
-     *
-     * @return array<int>
-     */
-    public function departmentScopeIds(): array
-    {
-        return $this->managedDepartments()->pluck('id')
-            ->push($this->department_id)->filter()->unique()->values()->all();
-    }
-
     public function scopeActive(Builder $query): void
     {
         $query->where('is_active', true);
@@ -253,7 +236,8 @@ class User extends Authenticatable
 
     /**
      * Users that $viewer is allowed to see and manage in the people directory.
-     * Admins see members in their own department plus members without one.
+     * Super admins manage everyone; admins manage every member in any department
+     * (but not other admins or super admins).
      */
     public function scopeManageableBy(Builder $query, User $viewer): void
     {
@@ -261,10 +245,7 @@ class User extends Authenticatable
             return;
         }
 
-        $query->where('role', Role::Member->value)
-            ->where(fn (Builder $q) => $q
-                ->whereIn('department_id', $viewer->departmentScopeIds())
-                ->orWhereNull('department_id'));
+        $query->where('role', Role::Member->value);
     }
 
     /** Transparent task-based stats for the profile / performance cards. */

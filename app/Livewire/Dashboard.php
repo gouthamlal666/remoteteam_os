@@ -26,12 +26,7 @@ class Dashboard extends Component
             'user' => $user,
             'greeting' => $this->greeting(),
             'stats' => $user->isMember() ? $this->memberStats($user) : $this->managerStats($user),
-            'departments' => match (true) {
-                $user->isSuperAdmin() => $performance->departmentBreakdown(),
-                $user->isAdmin() => $performance->departmentBreakdown()
-                    ->filter(fn ($row) => in_array($row['department']->id, $user->departmentScopeIds(), true))->values(),
-                default => collect(),
-            },
+            'departments' => $user->isManager() ? $performance->departmentBreakdown() : collect(),
             'focusTasks' => $this->focusTasks($user),
             'projects' => Project::visibleTo($user)->withProgressCounts()->where('status', '!=', 'completed')
                 ->orderByRaw('deadline is null, deadline')->limit(5)->get(),

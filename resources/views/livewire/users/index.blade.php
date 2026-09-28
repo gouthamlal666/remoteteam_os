@@ -5,7 +5,7 @@
                 <x-icon name="search" class="pointer-events-none absolute top-2.5 left-3 size-4 text-slate-400" />
                 <input wire:model.live.debounce.300ms="search" type="search" placeholder="Search name, email, title…" class="input pl-9">
             </div>
-            @if ($actor->isSuperAdmin())
+            @if ($actor->isManager())
                 <select wire:model.live="roleFilter" class="input w-auto">
                     <option value="">All roles</option>
                     @foreach (\App\Enums\Role::cases() as $r)
@@ -23,7 +23,7 @@
         <button wire:click="create" class="btn-primary"><x-icon name="plus" class="size-4" /> Add person</button>
     </div>
 
-    @php $isSuper = $actor->isSuperAdmin(); @endphp
+    @php $isSuper = $actor->isManager(); @endphp
     <div class="overflow-hidden rounded-xl border border-slate-200 bg-white">
         {{-- Column headings (desktop) --}}
         <div @class([
@@ -169,7 +169,7 @@
                 </select>
             </x-field>
             <x-field label="Department" for="u-dept" error="department_id">
-                <select wire:model="department_id" id="u-dept" class="input" @disabled($actor->isAdmin() && $departments->count() < 2)>
+                <select wire:model="department_id" id="u-dept" class="input">
                     <option value="">— None —</option>
                     @foreach ($departments as $d)
                         <option value="{{ $d->id }}">{{ $d->name }}</option>
@@ -235,7 +235,7 @@
                 <input wire:model="is_active" type="checkbox" class="rounded border-slate-300 text-indigo-600" @disabled($editingId === $actor->id)>
                 Active (can sign in)
             </label>
-            @if ($editingId && $actor->isSuperAdmin())
+            @if ($editingId && $actor->isManager())
                 <a href="{{ route('users.show', $editingId) }}#employee" class="group flex items-center gap-3 rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-white p-3 hover:border-indigo-300 sm:col-span-2">
                     <span class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white text-indigo-600 shadow-xs ring-1 ring-indigo-100"><x-icon name="id-card" class="size-5" /></span>
                     <span class="min-w-0 flex-1 text-sm">
@@ -244,7 +244,7 @@
                     </span>
                     <span class="text-indigo-600 transition group-hover:translate-x-0.5">→</span>
                 </a>
-            @elseif (! $editingId && $actor->isSuperAdmin())
+            @elseif (! $editingId && $actor->isManager())
                 <p class="flex items-center gap-2 rounded-lg bg-slate-50 p-3 text-sm text-slate-600 sm:col-span-2"><x-icon name="id-card" class="size-5 text-indigo-500" /> Next, you'll add their photo, mobile, guardian contact and documents.</p>
             @endif
             <div class="flex justify-end gap-2 pt-2 sm:col-span-2">

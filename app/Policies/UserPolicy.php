@@ -39,24 +39,34 @@ class UserPolicy
     }
 
     /** Only super admins delete accounts, never their own, and never the last super admin. */
+    /**
+     * Super admins can delete anyone except themselves and the last super admin;
+     * admins can delete members.
+     */
     public function delete(User $user, User $target): bool
     {
-        if (! $user->isSuperAdmin() || $user->is($target)) {
+        if ($user->is($target)) {
             return false;
         }
 
-        return ! $target->isSuperAdmin() || User::role(Role::SuperAdmin)->count() > 1;
+        if ($user->isAdmin()) {
+            return $target->isMember();
+        }
+
+        return $user->isSuperAdmin()
+            && (! $target->isSuperAdmin() || User::role(Role::SuperAdmin)->count() > 1);
     }
 
-    /** HR record (personal details, guardian contact, documents): the employee and super admins only. */
+    /** HR record (personal details, guardian contact, documents): the employee and whoever manages them. */
     public function viewEmployeeRecord(User $user, User $target): bool
     {
-        return $user->isSuperAdmin() || $user->is($target);
+        return $user->is($target) || $this->manageEmployeeRecord($user, $target);
     }
 
+    /** Super admins manage everyone's record; admins manage members' records. */
     public function manageEmployeeRecord(User $user, User $target): bool
     {
-        return $user->isSuperAdmin();
+        return $user->isSuperAdmin() || ($user->isAdmin() && $target->isMember());
     }
 
     /** People can change their own photo; super admins can change anyone's. */

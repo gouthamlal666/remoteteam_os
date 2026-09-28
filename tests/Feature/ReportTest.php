@@ -48,17 +48,16 @@ class ReportTest extends TestCase
             ->assertDontSee('Team daily');
     }
 
-    public function test_admin_team_view_is_limited_to_their_department(): void
+    public function test_admin_team_view_covers_members_in_every_department(): void
     {
-        $dept = Department::factory()->create();
-        $admin = User::factory()->admin()->create(['department_id' => $dept->id]);
-        $mine = User::factory()->create(['department_id' => $dept->id, 'name' => 'Inside Person']);
-        User::factory()->create(['department_id' => Department::factory()->create()->id, 'name' => 'Outside Person']);
+        $admin = User::factory()->admin()->create(['department_id' => Department::factory()->create()->id]);
+        User::factory()->create(['department_id' => Department::factory()->create()->id, 'name' => 'Elsewhere Person']);
+        User::factory()->admin()->create(['name' => 'Another Admin']);
 
         Livewire::actingAs($admin)->test(Index::class)
             ->set('tab', 'team')
-            ->assertSee('Inside Person')
-            ->assertDontSee('Outside Person');
+            ->assertSee('Elsewhere Person')
+            ->assertDontSee('Another Admin');
     }
 
     public function test_weekly_summary_counts_reports_hours_and_completed_tasks(): void

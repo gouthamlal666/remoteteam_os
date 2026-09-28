@@ -125,7 +125,7 @@ class Index extends Component
     {
         return User::manageableBy($user)->active()
             ->where('role', '!=', Role::SuperAdmin->value)
-            ->when($user->isSuperAdmin() && $this->department, fn ($q) => $q->where('department_id', $this->department))
+            ->when($this->department, fn ($q) => $q->where('department_id', $this->department))
             ->with('department:id,name')
             ->orderBy('name')->get();
     }
@@ -151,7 +151,7 @@ class Index extends Component
         $data = [
             'user' => $user,
             'myReports' => $user->dailyReports()->latest('report_date')->limit(14)->get(),
-            'departments' => $user->isSuperAdmin() ? Department::orderBy('name')->get(['id', 'name']) : collect(),
+            'departments' => $user->isManager() ? Department::orderBy('name')->get(['id', 'name']) : collect(),
         ];
 
         if ($user->isManager()) {

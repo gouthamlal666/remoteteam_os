@@ -52,12 +52,12 @@ class Project extends Model
     }
 
     /**
-     * Super admins see everything; admins see projects they own, belong to, or
-     * that sit in their department; members see projects they belong to.
+     * Super admins and admins see every project; members see projects they
+     * own or belong to.
      */
     public function scopeVisibleTo(Builder $query, User $user): void
     {
-        if ($user->isSuperAdmin()) {
+        if ($user->isManager()) {
             return;
         }
 
@@ -65,9 +65,6 @@ class Project extends Model
             $q->where('owner_id', $user->id)
                 ->orWhereHas('members', fn (Builder $m) => $m->whereKey($user->id));
 
-            if ($user->isAdmin() && ($departments = $user->departmentScopeIds())) {
-                $q->orWhereIn('department_id', $departments);
-            }
         });
     }
 

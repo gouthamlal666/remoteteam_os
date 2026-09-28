@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Livewire\Settings;
 use App\Livewire\Users\EmployeeRecord;
-use App\Models\Department;
 use App\Models\User;
 use App\Services\UserService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -88,20 +87,23 @@ class EmployeeRecordTest extends TestCase
             ->assertHasNoErrors();
     }
 
-    public function test_admins_and_colleagues_cannot_see_the_record_or_documents(): void
+    public function test_admins_manage_member_records_but_colleagues_cannot_see_them(): void
     {
-        $dept = Department::factory()->create();
-        $admin = User::factory()->admin()->create(['department_id' => $dept->id]);
-        $this->employee->update(['department_id' => $dept->id]);
+        $admin = User::factory()->admin()->create();
         $doc = $this->employee->employeeDocuments()->create([
             'type' => 'id_proof', 'title' => 'ID', 'path' => 'employee-documents/x.pdf', 'original_name' => 'x.pdf',
         ]);
 
-        foreach ([$admin, User::factory()->create()] as $viewer) {
-            $this->actingAs($viewer)->get(route('users.show', $this->employee))->assertOk()->assertDontSee('Employee record');
-            $this->actingAs($viewer)->get(route('employee-documents.show', $doc))->assertForbidden();
-            Livewire::actingAs($viewer)->test(EmployeeRecord::class, ['user' => $this->employee])->assertForbidden();
-        }
+        Livewire::actingAs($admin)->test(EmployeeRecord::class, ['user' => $this->employee])
+            ->call('edit')->set('details.guardian_name', 'Guardian')->call('save')->assertHasNoErrors();
+
+        // …but not the records of other admins or the super admin.
+        Livewire::actingAs($admin)->test(EmployeeRecord::class, ['user' => $this->super])->assertForbidden();
+
+        $colleague = User::factory()->create();
+        $this->actingAs($colleague)->get(route('users.show', $this->employee))->assertOk()->assertDontSee('Employee record');
+        $this->actingAs($colleague)->get(route('employee-documents.show', $doc))->assertForbidden();
+        Livewire::actingAs($colleague)->test(EmployeeRecord::class, ['user' => $this->employee])->assertForbidden();
     }
 
     public function test_photo_shows_everywhere_and_is_served_only_to_signed_in_users(): void
