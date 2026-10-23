@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AttachmentController;
+use App\Http\Controllers\AttendanceExportController;
 use App\Http\Controllers\ChatAttachmentController;
 use App\Http\Controllers\ClientFileController;
 use App\Http\Controllers\DirectMessageController;
@@ -41,6 +42,7 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::livewire('/clients/{client}', Livewire\Clients\Show::class)->name('clients.show');
     Route::get('/clients/{client}/logo', [ClientFileController::class, 'logo'])->name('clients.logo');
     Route::get('/client-files/{file}', [ClientFileController::class, 'download'])->name('client-files.show');
+    Route::get('/client-files/{file}/view', [ClientFileController::class, 'view'])->name('client-files.view');
 
     Route::livewire('/people', Livewire\Users\Index::class)->name('users.index');
     Route::livewire('/people/{user}', Livewire\Users\Show::class)->name('users.show');
@@ -56,6 +58,10 @@ Route::middleware(['auth', 'active'])->group(function () {
 
     Route::livewire('/meetings', Livewire\Meetings\Index::class)->name('meetings.index');
     Route::livewire('/meetings/{meeting}', Livewire\Meetings\Show::class)->name('meetings.show');
+
+    Route::livewire('/attendance', Livewire\Attendance\Index::class)->name('attendance.index');
+    Route::get('/attendance/export', AttendanceExportController::class)->name('attendance.export');
+    Route::livewire('/leave', Livewire\Leave\Index::class)->name('leave.index');
 
     Route::livewire('/reports', Livewire\Reports\Index::class)->name('reports.index');
 

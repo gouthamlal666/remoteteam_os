@@ -18,11 +18,11 @@
     $user = auth()->user();
     $nav = [
         ['label' => 'Dashboard', 'route' => 'dashboard', 'icon' => 'home', 'match' => 'dashboard'],
+        ...($user->isManager() ? [['label' => 'Clients', 'route' => 'clients.index', 'icon' => 'briefcase', 'match' => 'clients.*']] : []),
         ['label' => 'Projects', 'route' => 'projects.index', 'icon' => 'folder', 'match' => 'projects.*'],
         ['label' => $user->isMember() ? 'My Tasks' : 'Tasks', 'route' => 'tasks.index', 'icon' => 'check', 'match' => 'tasks.*'],
     ];
     if ($user->isManager()) {
-        $nav[] = ['label' => 'Clients', 'route' => 'clients.index', 'icon' => 'briefcase', 'match' => 'clients.*'];
         $nav[] = ['label' => 'People', 'route' => 'users.index', 'icon' => 'users', 'match' => 'users.*'];
     }
     if ($user->isSuperAdmin()) {
@@ -30,6 +30,8 @@
     }
     $nav[] = ['label' => 'Chat', 'route' => 'chat', 'icon' => 'chat', 'match' => 'chat*', 'badge' => $user->unreadMessagesCount()];
     $nav[] = ['label' => 'Meetings', 'route' => 'meetings.index', 'icon' => 'calendar', 'match' => 'meetings.*'];
+    $nav[] = ['label' => 'Attendance', 'route' => 'attendance.index', 'icon' => 'calendar-check', 'match' => 'attendance.*'];
+    $nav[] = ['label' => 'Leave', 'route' => 'leave.index', 'icon' => 'sun', 'match' => 'leave.*', 'badge' => $user->isManager() ? \App\Models\LeaveRequest::where('status', 'pending')->where('user_id', '!=', $user->id)->with('user')->get()->filter(fn ($r) => $user->can('review', $r))->count() : 0];
     $nav[] = ['label' => 'Reports', 'route' => 'reports.index', 'icon' => 'chart', 'match' => 'reports.*'];
     $nav[] = ['label' => 'Activity', 'route' => 'activity.index', 'icon' => 'clock', 'match' => 'activity.*'];
     $nav[] = ['label' => 'My settings', 'route' => 'settings', 'icon' => 'cog', 'match' => 'settings'];

@@ -67,6 +67,16 @@ class Client extends Model
         return $this->hasMany(ClientFile::class)->latest();
     }
 
+    public function folders(): HasMany
+    {
+        return $this->hasMany(ClientFolder::class)->orderBy('name');
+    }
+
+    public function details(): HasMany
+    {
+        return $this->hasMany(ClientDetail::class)->orderBy('position')->orderBy('id');
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

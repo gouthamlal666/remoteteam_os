@@ -14,12 +14,35 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * notes are encrypted at rest and hidden from array/JSON output, so they never
  * reach the browser unless explicitly revealed.
  */
-#[Fillable(['client_id', 'label', 'url', 'username', 'password', 'notes', 'created_by'])]
+#[Fillable(['client_id', 'category', 'label', 'url', 'username', 'password', 'notes', 'created_by'])]
 #[Hidden(['password', 'notes'])]
 class ClientCredential extends Model
 {
     /** @use HasFactory<ClientCredentialFactory> */
     use HasFactory;
+
+    /** @var array<string, array{0: string, 1: string}> category => [label, icon] */
+    public const CATEGORIES = [
+        'hosting' => ['Hosting / server', '🗄️'],
+        'domain' => ['Domain', '🌐'],
+        'cms' => ['Website admin / CMS', '🛠️'],
+        'email' => ['Email', '✉️'],
+        'social' => ['Social media', '📣'],
+        'analytics' => ['Analytics / ads', '📈'],
+        'payment' => ['Payments', '💳'],
+        'database' => ['Database / FTP', '🔌'],
+        'other' => ['Other', '🔑'],
+    ];
+
+    public function categoryLabel(): string
+    {
+        return self::CATEGORIES[$this->category][0] ?? 'Other';
+    }
+
+    public function icon(): string
+    {
+        return self::CATEGORIES[$this->category][1] ?? '🔑';
+    }
 
     protected function casts(): array
     {

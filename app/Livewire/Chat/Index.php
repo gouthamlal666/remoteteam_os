@@ -211,6 +211,7 @@ class Index extends Component
     /** Called by wire:poll; marks the open conversation read and scrolls on new messages. */
     public function poll(ChatService $chat): void
     {
+        $this->dropIfNoLongerMember();
         if (! $this->conversation) {
             return;
         }
@@ -253,8 +254,17 @@ class Index extends Component
             ->get();
     }
 
+    /** Someone removed from a channel (or who left it) stops seeing it, even with the tab open. */
+    private function dropIfNoLongerMember(): void
+    {
+        if ($this->conversation && ! auth()->user()->can('view', $this->conversation->fresh() ?? $this->conversation)) {
+            $this->conversation = null;
+        }
+    }
+
     public function render()
     {
+        $this->dropIfNoLongerMember();
         $user = auth()->user();
         $conversations = $this->conversationList($user);
         $messages = collect();

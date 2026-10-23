@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\LeaveRequest;
 use App\Models\Meeting;
 use App\Models\Message;
 use App\Models\Task;
@@ -149,6 +150,29 @@ class Notifier
             'report.reminder', "Don't forget today's report",
             'What did you complete, what are you working on, any blockers? It only takes a minute.',
             route('reports.index'), '📝', mail: true,
+        ));
+    }
+
+    /** @param iterable<User> $approvers */
+    public function leaveRequested(LeaveRequest $request, iterable $approvers): void
+    {
+        $this->send($approvers, $request->user, new Alert(
+            'leave.requested', 'Leave request',
+            "{$request->user->name} applied for {$request->days} day(s) of {$request->type->name}: {$request->periodLabel()}.",
+            route('leave.index', ['tab' => 'approvals']), '🌴', mail: true,
+        ));
+    }
+
+    public function leaveReviewed(LeaveRequest $request, User $reviewer): void
+    {
+        $approved = $request->status === 'approved';
+
+        $this->send([$request->user], $reviewer, new Alert(
+            $approved ? 'leave.approved' : 'leave.rejected',
+            $approved ? 'Leave approved' : 'Leave not approved',
+            "{$reviewer->name} ".($approved ? 'approved' : 'did not approve')." your {$request->type->name} ({$request->periodLabel()})"
+                .($request->review_note ? ': '.Str::limit($request->review_note, 120) : '.'),
+            route('leave.index'), $approved ? '✅' : '❌', mail: true,
         ));
     }
 

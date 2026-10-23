@@ -21,7 +21,7 @@ class CommandPalette extends Component
 
         $pages = collect([
             ['Dashboard', route('dashboard')], ['Projects', route('projects.index')], ['Tasks', route('tasks.index')],
-            ['Chat', route('chat')], ['Meetings', route('meetings.index')], ['Reports', route('reports.index')],
+            ['Chat', route('chat')], ['Meetings', route('meetings.index')], ['Attendance', route('attendance.index')], ['Leave', route('leave.index')], ['Holidays', route('attendance.index', ['tab' => 'holidays'])], ['Reports', route('reports.index')],
             ['Notifications', route('notifications')], ['Settings', route('settings')], ['Activity', route('activity.index')],
         ])->when($user->isManager(), fn ($c) => $c->push(['People', route('users.index')])->push(['Clients', route('clients.index')]))
             ->filter(fn ($p) => $q === '' || str_contains(strtolower($p[0]), strtolower($q)))

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Client;
 use App\Models\ClientCredential;
 use App\Models\ClientFile;
+use App\Models\ClientFolder;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -55,9 +56,25 @@ class ClientService
         }
     }
 
-    public function addFile(User $actor, Client $client, UploadedFile $file, string $type, string $title): ClientFile
+    /** Largest upload allowed, in KB: our 100 MB cap or PHP's upload_max_filesize, whichever is lower. */
+    public static function maxUploadKb(): int
+    {
+        $ini = trim((string) ini_get('upload_max_filesize'));
+        $bytes = match (strtolower(substr($ini, -1))) {
+            'g' => (int) $ini * 1024 ** 3,
+            'm' => (int) $ini * 1024 ** 2,
+            'k' => (int) $ini * 1024,
+            default => (int) $ini,
+        };
+
+        return (int) min(100 * 1024, $bytes > 0 ? intdiv($bytes, 1024) : 100 * 1024);
+    }
+
+    public function addFile(User $actor, Client $client, UploadedFile $file, string $type, string $title, ?ClientFolder $folder = null): ClientFile
     {
         $record = $client->files()->create([
+            'folder_id' => $folder?->id,
+            'kind' => 'file',
             'uploaded_by' => $actor->id,
             'type' => $type,
             'title' => $title,
@@ -73,9 +90,45 @@ class ClientService
         return $record;
     }
 
+    /** Saves a Google Drive / YouTube / Vimeo / Loom (or any) link into the Drive. */
+    public function addLink(User $actor, Client $client, string $url, ?string $title, ?ClientFolder $folder = null): ClientFile
+    {
+        $item = $client->files()->make([
+            'folder_id' => $folder?->id,
+            'kind' => 'link',
+            'uploaded_by' => $actor->id,
+            'type' => 'other',
+            'url' => $url,
+            'size' => 0,
+        ]);
+        $item->title = $title ?: ($item->linkProvider().' '.($item->isVideo() ? 'video' : 'link'));
+        $item->save();
+
+        $this->activity->log($actor, 'client.file', "added \"{$item->title}\" to client {$client->name}");
+
+        return $item;
+    }
+
+    public function createFolder(User $actor, Client $client, string $name, ?ClientFolder $parent = null): ClientFolder
+    {
+        return $client->folders()->create(['name' => trim($name), 'parent_id' => $parent?->id, 'created_by' => $actor->id]);
+    }
+
+    /** Deletes a folder; anything inside it moves up to the parent folder (nothing is lost). */
+    public function deleteFolder(ClientFolder $folder): void
+    {
+        DB::transaction(function () use ($folder) {
+            $folder->items()->update(['folder_id' => $folder->parent_id]);
+            $folder->children()->update(['parent_id' => $folder->parent_id]);
+            $folder->delete();
+        });
+    }
+
     public function deleteFile(User $actor, ClientFile $file): void
     {
-        Storage::disk($file->disk)->delete($file->path);
+        if ($file->path) {
+            Storage::disk($file->disk)->delete($file->path);
+        }
         $this->activity->log($actor, 'client.file_deleted', "removed \"{$file->title}\" from client {$file->client->name}");
         $file->delete();
     }
@@ -93,7 +146,9 @@ class ClientService
     {
         DB::transaction(function () use ($actor, $client) {
             foreach ($client->files as $file) {
-                Storage::disk($file->disk)->delete($file->path);
+                if ($file->path) {
+                    Storage::disk($file->disk)->delete($file->path);
+                }
             }
             $this->removeLogo($client);
 

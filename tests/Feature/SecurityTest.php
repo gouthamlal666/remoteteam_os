@@ -4,12 +4,17 @@ namespace Tests\Feature;
 
 use App\Livewire\Auth\ForgotPassword;
 use App\Livewire\Auth\Login;
+use App\Livewire\Auth\ResetPassword;
+use App\Livewire\Chat\Index;
 use App\Livewire\Chat\Index as Chat;
 use App\Livewire\Meetings\Index as Meetings;
 use App\Livewire\Projects\Index as Projects;
 use App\Livewire\Settings;
+use App\Livewire\Tasks\TaskEditor;
+use App\Livewire\Users\EmployeeRecord;
 use App\Livewire\Users\Index as People;
 use App\Models\Department;
+use App\Models\Project;
 use App\Models\User;
 use App\Services\ChatService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -176,5 +181,67 @@ class SecurityTest extends TestCase
     {
         $this->assertFalse(config('filesystems.disks.local.serve'));
         $this->get('/storage/employee-documents/1/secret.pdf')->assertNotFound();
+    }
+
+    public function test_admin_cannot_move_an_hr_record_onto_another_user(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $member = User::factory()->create();
+        $super = User::factory()->superAdmin()->create();
+
+        Livewire::actingAs($admin)->test(EmployeeRecord::class, ['user' => $member])
+            ->call('edit')
+            ->set('details.city', 'Kochi')
+            ->set('details.user_id', $super->id)
+            ->call('save')->assertHasNoErrors();
+
+        $this->assertSame('Kochi', $member->employeeProfile()->value('city'));
+        $this->assertNull($super->employeeProfile()->first());
+    }
+
+    public function test_people_removed_from_a_channel_stop_receiving_it(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $member = User::factory()->create();
+        $channel = app(ChatService::class)->createChannel($admin, 'Leadership', null, [$member->id]);
+
+        $open = Livewire::actingAs($member)->test(Index::class, ['conversation' => $channel]);
+        $channel->members()->detach($member->id);
+        $channel->messages()->create(['user_id' => $admin->id, 'body' => 'Confidential plan']);
+
+        $open->call('poll')->assertSet('conversation', null)->assertDontSee('Confidential plan');
+    }
+
+    public function test_task_editor_does_not_reveal_members_of_hidden_projects(): void
+    {
+        $member = User::factory()->create();
+        $insider = User::factory()->create(['name' => 'Zzzz Insider']);
+        $hidden = Project::factory()->create();
+        $hidden->members()->attach($insider->id);
+
+        $editor = Livewire::actingAs($member)->test(TaskEditor::class)
+            ->set('project_id', $hidden->id);
+
+        $people = $editor->viewData('people');
+        $this->assertNotSame($insider->id, $people->first()?->id, 'hidden project members must not be sorted first');
+    }
+
+    public function test_reset_password_does_not_reveal_whether_an_email_exists(): void
+    {
+        $user = User::factory()->create();
+        $messages = [];
+        foreach ([$user->email, 'nobody@example.com'] as $email) {
+            $messages[] = Livewire::test(ResetPassword::class, ['token' => 'bad-token'])
+                ->set('email', $email)->set('password', 'NewPassword123!')->set('password_confirmation', 'NewPassword123!')
+                ->call('resetPassword')->errors()->first('email');
+        }
+
+        $this->assertSame($messages[0], $messages[1]);
+
+        for ($i = 0; $i < 5; $i++) {
+            Livewire::test(ResetPassword::class, ['token' => 'x'])->set('email', 'a@b.co')->call('resetPassword');
+        }
+        $this->assertStringContainsString('Too many', Livewire::test(ResetPassword::class, ['token' => 'x'])
+            ->set('email', 'a@b.co')->call('resetPassword')->errors()->first('email'));
     }
 }

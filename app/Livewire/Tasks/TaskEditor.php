@@ -141,7 +141,7 @@ class TaskEditor extends Component
 
         // Suggest project members first, then everyone else who is active.
         $memberIds = $this->project_id
-            ? Project::find($this->project_id)?->members()->pluck('users.id')->all() ?? []
+            ? Project::visibleTo($user)->find($this->project_id)?->members()->pluck('users.id')->all() ?? []
             : [];
 
         $people = User::active()->orderBy('name')->get(['id', 'name', 'job_title'])

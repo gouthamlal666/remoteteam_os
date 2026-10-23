@@ -47,7 +47,7 @@ class DashboardCalendar extends Component
 
     private function monthStart(): Carbon
     {
-        return rescue(fn () => Carbon::createFromFormat('Y-m', $this->month)->startOfMonth(), today()->startOfMonth(), false);
+        return rescue(fn () => Carbon::createFromFormat('!Y-m', $this->month)->startOfMonth(), today()->startOfMonth(), false);
     }
 
     /** @return array{meetings: Collection, tasks: Collection} */

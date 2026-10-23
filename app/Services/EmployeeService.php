@@ -6,6 +6,7 @@ use App\Models\EmployeeDocument;
 use App\Models\EmployeeProfile;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -23,6 +24,8 @@ class EmployeeService
     {
         return DB::transaction(function () use ($actor, $user, $phone, $details) {
             $user->update(['phone' => $phone ?: null]);
+            // Only profile fields: never let the client choose which user the record belongs to.
+            $details = Arr::only($details, array_diff((new EmployeeProfile)->getFillable(), ['user_id']));
             $profile = $user->employeeProfile()->updateOrCreate([], $details);
             $this->activity->log($actor, 'employee.updated', "updated the employee record of {$user->name}", $user);
 

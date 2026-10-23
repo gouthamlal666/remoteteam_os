@@ -3,6 +3,8 @@
 namespace App\Support;
 
 use App\Models\Setting;
+use App\Services\WorkCalendar;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Schema;
@@ -20,7 +22,10 @@ class Settings
         'general.logo_path' => null,
         'general.default_timezone' => 'Asia/Kolkata',
 
-        'work.working_days' => ['mon', 'tue', 'wed', 'thu', 'fri'],
+        // Sundays off; Saturdays are working days except those listed in work.saturday_offs.
+        'work.working_days' => ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'],
+        'work.saturday_offs' => [2],
+        'work.late_grace_minutes' => 15,
         'work.day_start' => '09:00',
         'work.day_end' => '18:00',
         'work.report_reminder_enabled' => false,
@@ -30,7 +35,7 @@ class Settings
         'notifications.whatsapp_enabled' => false,
         'whatsapp.driver' => 'log',
         'whatsapp.default_country_code' => '+91',
-        'whatsapp.events' => ['task.assigned', 'task.approved', 'task.revision', 'task.due', 'meeting.invited', 'meeting.soon', 'meeting.cancelled', 'report.reminder'],
+        'whatsapp.events' => ['task.assigned', 'task.approved', 'task.revision', 'task.due', 'meeting.invited', 'meeting.soon', 'meeting.cancelled', 'report.reminder', 'leave.requested', 'leave.approved', 'leave.rejected'],
         'whatsapp.meta_phone_number_id' => null,
         'whatsapp.meta_token' => null,
         'whatsapp.meta_template' => 'remoteteam_alert',
@@ -58,6 +63,9 @@ class Settings
         'meeting.soon' => 'Meeting starts in 15 minutes',
         'meeting.cancelled' => 'Meeting cancelled',
         'report.reminder' => 'Daily report reminder',
+        'leave.requested' => 'Leave request (to approvers)',
+        'leave.approved' => 'Leave approved',
+        'leave.rejected' => 'Leave rejected',
         'chat.direct' => 'New private message',
         'chat.mention' => 'Mentioned in chat',
     ];
@@ -137,9 +145,10 @@ class Settings
         return (array) self::get('work.working_days');
     }
 
+    /** Working day after weekly offs, the Saturday rule and holidays (see WorkCalendar). */
     public static function isWorkingDay(\DateTimeInterface $date): bool
     {
-        return in_array(strtolower($date->format('D')), self::workingDays(), true);
+        return app(WorkCalendar::class)->isWorkingDay(Carbon::instance($date));
     }
 
     public static function minPasswordLength(): int

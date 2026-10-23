@@ -4,7 +4,7 @@
         'projects' => ['Projects', $summary['projects']],
         'links' => ['Links', $client->links->count()],
         'vault' => ['Passwords', $credentialCount],
-        'files' => ['Files & content', $client->files->count()],
+        'drive' => ['Drive', $driveCount],
     ];
 @endphp
 <div class="space-y-6">
@@ -47,7 +47,25 @@
             </div>
             <div class="flex shrink-0 gap-2 sm:self-start">
                 @can('update', $client)
-                    <button wire:click="edit" class="btn-primary"><x-icon name="pencil" class="size-4" /> Edit details</button>
+                    <div x-data="{ open: false }" class="relative" x-on:click.outside="open = false" x-on:keydown.escape="open = false">
+                        <button x-on:click="open = !open" class="btn-primary" :aria-expanded="open" aria-haspopup="menu"><x-icon name="plus" class="size-4" /> Add</button>
+                        <div x-show="open" x-cloak x-transition class="absolute right-0 z-30 mt-2 w-64 overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl" role="menu">
+                            @foreach ([
+                                ['👤', 'Contact person', 'editContact', null],
+                                ['📝', 'Extra detail', 'editDetail', null],
+                                ['🔗', 'Link', 'editLink', 'links'],
+                                ['🔑', 'Login / password', null, 'vault'],
+                                ['📁', 'Files, images, videos', null, 'drive'],
+                            ] as [$icon, $label, $action, $goTab])
+                                <button type="button" role="menuitem" x-on:click="open = false"
+                                        @if ($action) wire:click="{{ $action }}" @else wire:click="$set('tab', '{{ $goTab }}')" @endif
+                                        class="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50">
+                                    <span class="w-5 text-center">{{ $icon }}</span> {{ $label }}
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                    <button wire:click="edit" class="btn-secondary"><x-icon name="pencil" class="size-4" /> Edit details</button>
                 @endcan
                 @can('delete', $client)
                     <button wire:click="delete" wire:confirm="Delete {{ $client->name }}?\n\nTheir contacts, links, saved passwords and files are permanently removed. Their {{ $summary['projects'] }} {{ str('project')->plural($summary['projects']) }} are kept as internal projects."
@@ -169,6 +187,91 @@
                         <li><x-empty class="py-6">No contacts yet.</x-empty></li>
                     @endforelse
                 </ul>
+            </x-card>
+        </div>
+
+        <div class="grid gap-6 lg:grid-cols-2">
+            {{-- Extra details --}}
+            <x-card title="Extra details">
+                <x-slot:actions>
+                    @can('update', $client) <button wire:click="editDetail" class="text-sm font-medium text-indigo-600 hover:underline">+ Add</button> @endcan
+                </x-slot:actions>
+                <dl class="divide-y divide-slate-100">
+                    @forelse ($client->details as $d)
+                        <div wire:key="dt-{{ $d->id }}" class="group grid grid-cols-[9rem_1fr_auto] items-start gap-3 px-4 py-2.5 text-sm">
+                            <dt class="text-slate-500">{{ $d->label }}</dt>
+                            <dd class="min-w-0 font-medium break-words whitespace-pre-line text-slate-900">
+                                @if ($d->isLink()) <a href="{{ $d->value }}" target="_blank" rel="noopener noreferrer" class="text-indigo-700 hover:underline">{{ $d->value }}</a> @else {{ $d->value }} @endif
+                            </dd>
+                            @can('update', $client)
+                                <div class="hidden gap-1 group-hover:flex">
+                                    <button wire:click="editDetail({{ $d->id }})" class="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Edit {{ $d->label }}"><x-icon name="pencil" class="size-3.5" /></button>
+                                    <button wire:click="deleteDetail({{ $d->id }})" wire:confirm="Remove “{{ $d->label }}”?" class="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600" aria-label="Remove {{ $d->label }}"><x-icon name="trash" class="size-3.5" /></button>
+                                </div>
+                            @endcan
+                        </div>
+                    @empty
+                        <p class="px-4 py-6 text-center text-sm text-slate-500">Add anything else worth remembering: hosting provider, domain expiry, CMS, retainer, brand colours…</p>
+                    @endforelse
+                </dl>
+            </x-card>
+
+            {{-- Quick links --}}
+            <x-card title="Quick links">
+                <x-slot:actions>
+                    <span class="flex gap-3">
+                        @can('update', $client) <button wire:click="editLink" class="text-sm font-medium text-indigo-600 hover:underline">+ Add</button> @endcan
+                        @if ($client->links->count() > 6) <button wire:click="$set('tab', 'links')" class="text-sm text-slate-500 hover:underline">All {{ $client->links->count() }}</button> @endif
+                    </span>
+                </x-slot:actions>
+                <ul class="grid gap-2 p-3 sm:grid-cols-2">
+                    @forelse ($client->links->take(6) as $l)
+                        <li><a href="{{ $l->url }}" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2.5 rounded-lg border border-slate-100 px-3 py-2 hover:border-indigo-200 hover:bg-indigo-50/40">
+                            <span class="text-lg">{{ $l->icon() }}</span>
+                            <span class="min-w-0"><span class="block truncate text-sm font-medium text-slate-900">{{ $l->label }}</span><span class="block truncate text-xs text-slate-500">{{ $l->host() }}</span></span>
+                        </a></li>
+                    @empty
+                        <li class="col-span-full py-4 text-center text-sm text-slate-500">No links yet: website, admin panel, social pages, shared folders…</li>
+                    @endforelse
+                </ul>
+            </x-card>
+
+            {{-- Logins --}}
+            <x-card title="Saved logins">
+                <x-slot:actions>
+                    <button wire:click="$set('tab', 'vault')" class="text-sm font-medium text-indigo-600 hover:underline">{{ $credentialCount ? 'Open vault' : '+ Add' }}</button>
+                </x-slot:actions>
+                <ul class="divide-y divide-slate-100">
+                    @forelse ($client->credentials->take(6) as $cr)
+                        <li class="flex items-center gap-3 px-4 py-2.5 text-sm">
+                            <span>{{ $cr->icon() }}</span>
+                            <span class="min-w-0 flex-1 truncate font-medium text-slate-900">{{ $cr->label }}</span>
+                            <span class="truncate font-mono text-xs text-slate-500">{{ $cr->username }}</span>
+                            <span class="text-slate-300">••••••</span>
+                        </li>
+                    @empty
+                        <li class="px-4 py-6 text-center text-sm text-slate-500">🔒 Keep hosting, domain, CMS, email and social logins in the encrypted vault.</li>
+                    @endforelse
+                </ul>
+            </x-card>
+
+            {{-- Recent in Drive --}}
+            <x-card title="Recent in Drive">
+                <x-slot:actions>
+                    <button wire:click="$set('tab', 'drive')" class="text-sm font-medium text-indigo-600 hover:underline">{{ $driveCount ? 'Open Drive' : '+ Upload' }}</button>
+                </x-slot:actions>
+                <div class="grid grid-cols-3 gap-2 p-3">
+                    @forelse ($recentDrive as $item)
+                        <button wire:click="$set('tab', 'drive')" class="group overflow-hidden rounded-lg border border-slate-100 text-left hover:border-indigo-200">
+                            <div class="flex aspect-[4/3] items-center justify-center overflow-hidden bg-slate-50">
+                                @if ($thumb = $item->thumbnailUrl()) <img src="{{ $thumb }}" alt="" loading="lazy" class="size-full object-cover" x-data x-on:error="$el.remove()"> @else <span class="text-3xl">{{ $item->icon() }}</span> @endif
+                            </div>
+                            <p class="truncate px-2 py-1 text-xs text-slate-700">{{ $item->title }}</p>
+                        </button>
+                    @empty
+                        <p class="col-span-full py-4 text-center text-sm text-slate-500">🗂️ Logos, images, PDFs, videos and Google Drive links live in the Drive.</p>
+                    @endforelse
+                </div>
             </x-card>
         </div>
     @endif
@@ -293,9 +396,9 @@
                     @forelse ($client->credentials as $cr)
                         <li wire:key="cr-{{ $cr->id }}" class="group px-4 py-3">
                             <div class="flex flex-wrap items-center gap-3">
-                                <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-100">🔑</span>
+                                <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-100" title="{{ $cr->categoryLabel() }}">{{ $cr->icon() }}</span>
                                 <div class="min-w-0 flex-1">
-                                    <p class="truncate text-sm font-semibold text-slate-900">{{ $cr->label }}</p>
+                                    <p class="truncate text-sm font-semibold text-slate-900">{{ $cr->label }} <span class="ml-1 text-xs font-normal text-slate-400">{{ $cr->categoryLabel() }}</span></p>
                                     <p class="truncate text-xs text-slate-500">
                                         @if ($cr->username) <span class="font-mono">{{ $cr->username }}</span> @endif
                                         @if ($cr->url) · <a href="{{ $cr->url }}" target="_blank" rel="noopener noreferrer" class="hover:text-indigo-700">{{ parse_url($cr->url, PHP_URL_HOST) ?: $cr->url }} ↗</a> @endif
@@ -321,45 +424,9 @@
         </div>
     @endif
 
-    {{-- ───────── Files ───────── --}}
-    @if ($tab === 'files')
-        @can('update', $client)
-            <form wire:submit="uploadFile" class="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-[1fr_14rem_1fr_auto] sm:items-end">
-                <x-field label="File" for="cf-file" error="upload">
-                    <input wire:model="upload" id="cf-file" type="file" class="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-2 file:text-sm file:font-medium hover:file:bg-slate-200">
-                    <p wire:loading wire:target="upload" class="text-xs text-slate-500">Uploading…</p>
-                </x-field>
-                <x-field label="Type" for="cf-type" error="fileType">
-                    <select wire:model="fileType" id="cf-type" class="input">
-                        @foreach (\App\Models\ClientFile::TYPES as $value => $label) <option value="{{ $value }}">{{ $label }}</option> @endforeach
-                    </select>
-                </x-field>
-                <x-field label="Title (optional)" for="cf-title" error="fileTitle">
-                    <input wire:model="fileTitle" id="cf-title" class="input" placeholder="e.g. 2026 service agreement">
-                </x-field>
-                <button type="submit" class="btn-primary" wire:loading.attr="disabled" wire:target="upload,uploadFile">Upload</button>
-                <p class="text-[11px] text-slate-400 sm:col-span-4">PDF, Office documents, images, ZIP, design files (AI, PSD, EPS) or video, up to 20 MB.</p>
-            </form>
-        @endcan
-        <x-card>
-            <ul class="divide-y divide-slate-100">
-                @forelse ($client->files as $f)
-                    <li wire:key="cf-{{ $f->id }}" class="flex items-center gap-3 px-4 py-3">
-                        <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-lg">{{ str_contains((string) $f->mime_type, 'image') ? '🖼️' : (str_contains((string) $f->mime_type, 'pdf') ? '📕' : (str_contains((string) $f->mime_type, 'video') ? '🎬' : '📄')) }}</span>
-                        <div class="min-w-0 flex-1">
-                            <a href="{{ route('client-files.show', $f) }}" class="block truncate text-sm font-medium text-slate-900 hover:text-indigo-700">{{ $f->title }}</a>
-                            <p class="truncate text-xs text-slate-500">{{ $f->typeLabel() }} · {{ $f->humanSize() }} · {{ $f->uploader->name }} · {{ $f->created_at->format('d M Y') }}</p>
-                        </div>
-                        <a href="{{ route('client-files.show', $f) }}" class="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Download {{ $f->title }}"><x-icon name="download" class="size-4" /></a>
-                        @can('update', $client)
-                            <button wire:click="deleteFile({{ $f->id }})" wire:confirm="Delete “{{ $f->title }}”? The file is permanently removed." class="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600" aria-label="Delete {{ $f->title }}"><x-icon name="trash" class="size-4" /></button>
-                        @endcan
-                    </li>
-                @empty
-                    <li><x-empty>No files yet. Keep contracts, proposals, brand assets and content here.</x-empty></li>
-                @endforelse
-            </ul>
-        </x-card>
+    {{-- ───────── Drive ───────── --}}
+    @if ($tab === 'drive')
+        <livewire:clients.drive :client="$client" :key="'drive-'.$client->id" />
     @endif
 
     {{-- ───────── Dialogs ───────── --}}
@@ -384,6 +451,23 @@
             </form>
         </x-modal>
 
+        <x-modal wire:model="showDetail" :title="$detailId ? 'Edit detail' : 'Add extra detail'" max-width="max-w-lg">
+            <form wire:submit="saveDetail" class="space-y-4">
+                <x-field label="Label" for="dt-label" error="detailLabel">
+                    <input wire:model="detailLabel" id="dt-label" class="input" list="dt-suggestions" placeholder="e.g. Hosting provider">
+                    <datalist id="dt-suggestions">@foreach (\App\Models\ClientDetail::SUGGESTIONS as $sug) <option value="{{ $sug }}"></option> @endforeach</datalist>
+                </x-field>
+                <x-field label="Value" for="dt-value" error="detailValue">
+                    <textarea wire:model="detailValue" id="dt-value" rows="2" class="input" placeholder="e.g. Hostinger (Business plan, renews March)"></textarea>
+                    <p class="text-xs text-slate-400">Links (https://…) become clickable. For passwords, use the encrypted Passwords tab instead.</p>
+                </x-field>
+                <div class="flex justify-end gap-2">
+                    <button type="button" x-on:click="open = false" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary">Save</button>
+                </div>
+            </form>
+        </x-modal>
+
         <x-modal wire:model="showLink" :title="$linkId ? 'Edit link' : 'Add link'" max-width="max-w-lg">
             <form wire:submit="saveLink" class="space-y-4">
                 <x-field label="Type" for="cl-type" error="linkType">
@@ -403,8 +487,27 @@
 
     @can('viewCredentials', $client)
         <x-modal wire:model="showCredential" :title="$credentialId ? 'Edit login' : 'Add login'" max-width="max-w-lg">
-            <form wire:submit="saveCredential" class="space-y-4" x-data="{ show: false }">
-                <x-field label="Name" for="cr-label" error="credLabel"><input wire:model="credLabel" id="cr-label" class="input" placeholder="WordPress admin, Hostinger, Instagram…"></x-field>
+            <form wire:submit="saveCredential" class="space-y-4" x-data="{
+                    show: false,
+                    generate() {
+                        const sets = ['ABCDEFGHJKLMNPQRSTUVWXYZ', 'abcdefghijkmnpqrstuvwxyz', '23456789', '!@#$%&*?'];
+                        const all = sets.join('');
+                        const rand = n => { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n };
+                        const chars = sets.map(set => set[rand(set.length)]);
+                        while (chars.length < 18) chars.push(all[rand(all.length)]);
+                        for (let i = chars.length - 1; i > 0; i--) { const j = rand(i + 1); [chars[i], chars[j]] = [chars[j], chars[i]] }
+                        $wire.set('credPassword', chars.join(''), false);
+                        this.show = true;
+                    },
+                }">
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <x-field label="Category" for="cr-cat" error="credCategory">
+                        <select wire:model="credCategory" id="cr-cat" class="input">
+                            @foreach (\App\Models\ClientCredential::CATEGORIES as $value => [$label, $icon]) <option value="{{ $value }}">{{ $icon }} {{ $label }}</option> @endforeach
+                        </select>
+                    </x-field>
+                    <x-field label="Name" for="cr-label" error="credLabel"><input wire:model="credLabel" id="cr-label" class="input" placeholder="WordPress admin, Hostinger…"></x-field>
+                </div>
                 <x-field label="Login URL" for="cr-url" error="credUrl"><input wire:model="credUrl" id="cr-url" type="url" class="input" placeholder="https://"></x-field>
                 <x-field label="Username / email" for="cr-user" error="credUsername"><input wire:model="credUsername" id="cr-user" class="input font-mono" autocomplete="off"></x-field>
                 <x-field :label="$credentialId ? 'New password (leave blank to keep the saved one)' : 'Password'" for="cr-pass" error="credPassword">
@@ -412,6 +515,7 @@
                         <input wire:model="credPassword" id="cr-pass" :type="show ? 'text' : 'password'" autocomplete="new-password" class="input pr-16 font-mono">
                         <button type="button" x-on:click="show = !show" class="absolute inset-y-0 right-0 px-3 text-xs text-slate-500" x-text="show ? 'Hide' : 'Show'">Show</button>
                     </div>
+                    <button type="button" x-on:click="generate()" class="text-xs font-medium text-indigo-600 hover:text-indigo-800">🔄 Generate strong password</button>
                 </x-field>
                 <x-field :label="$credentialId ? 'Secure notes (leave blank to keep existing)' : 'Secure notes (optional)'" for="cr-notes" error="credNotes">
                     <textarea wire:model="credNotes" id="cr-notes" rows="2" class="input" placeholder="2FA backup codes, security questions… (encrypted)"></textarea>

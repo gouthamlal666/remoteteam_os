@@ -113,7 +113,7 @@
     @if ($tab === 'weekly')
         @php
             $weekEnd = $weekStart->copy()->addDays(6);
-            $perWeek = count(\App\Support\Settings::workingDays()) ?: 5;
+            $perWeek = app(\App\Services\WorkCalendar::class)->countWorkingDays($weekStart, $weekStart->copy()->addDays(6)) ?: 1;
             $totals = ['hours' => $rows->sum('hours'), 'done' => $rows->sum(fn ($r) => $r['completed']->count()), 'onTime' => $rows->sum('completed_on_time'), 'overdue' => $rows->sum(fn ($r) => $r['overdue']->count()), 'reports' => $rows->sum('days_reported')];
         @endphp
         <div class="flex flex-wrap items-center justify-between gap-3">

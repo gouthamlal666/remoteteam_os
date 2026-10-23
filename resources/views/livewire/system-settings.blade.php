@@ -74,12 +74,28 @@
                             <div class="flex flex-wrap gap-2">
                                 @foreach (\App\Livewire\SystemSettings::DAYS as $value => $label)
                                     <label class="cursor-pointer">
-                                        <input type="checkbox" wire:model="working_days" value="{{ $value }}" class="peer sr-only">
+                                        <input type="checkbox" wire:model.live="working_days" value="{{ $value }}" class="peer sr-only">
                                         <span class="block rounded-lg border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-600 peer-checked:border-indigo-600 peer-checked:bg-indigo-600 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-300">{{ $label }}</span>
                                     </label>
                                 @endforeach
                             </div>
-                            <p class="text-xs text-slate-400">Used for the weekly report (expected reports per person) and daily reminders.</p>
+                            <p class="text-xs text-slate-400">Used for attendance, leave day counting, the weekly report and daily reminders.</p>
+                        </x-field>
+                        @if (in_array('sat', $working_days, true))
+                            <x-field label="Saturdays off each month" error="saturday_offs">
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach ([1, 2, 3, 4, 5] as $n)
+                                        <label class="cursor-pointer">
+                                            <input type="checkbox" wire:model="saturday_offs" value="{{ $n }}" class="peer sr-only">
+                                            <span class="block rounded-lg border border-slate-200 px-3.5 py-2 text-sm font-medium text-slate-600 peer-checked:border-violet-600 peer-checked:bg-violet-600 peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-violet-300">{{ \App\Services\WorkCalendar::ordinal($n) }} Sat</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                                <p class="text-xs text-slate-400">These Saturdays are holidays for everyone, e.g. the 2nd Saturday as in Kerala government offices.</p>
+                            </x-field>
+                        @endif
+                        <x-field label="Late after (minutes past start of day)" for="ss-grace" error="late_grace_minutes" class="max-w-xs">
+                            <input wire:model="late_grace_minutes" id="ss-grace" type="number" min="0" max="240" class="input">
                         </x-field>
                         <div class="grid gap-4 sm:grid-cols-2">
                             <x-field label="Default start of day" for="ss-start" error="day_start">

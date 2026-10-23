@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Support\Settings;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password as PasswordRule;
 use Illuminate\Validation\ValidationException;
@@ -35,6 +36,14 @@ class ResetPassword extends Component
 
     public function resetPassword()
     {
+        $key = 'reset-password:'.request()->ip();
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            $this->addError('email', 'Too many attempts. Try again in '.ceil(RateLimiter::availableIn($key) / 60).' minutes.');
+
+            return;
+        }
+        RateLimiter::hit($key, 10 * 60);
+
         $this->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'confirmed', PasswordRule::min(Settings::minPasswordLength())],
@@ -48,7 +57,10 @@ class ResetPassword extends Component
         );
 
         if ($status !== Password::PASSWORD_RESET) {
-            throw ValidationException::withMessages(['email' => __($status)]);
+            // One message for unknown email, wrong token and expired link, so this can't be used to find accounts.
+            throw ValidationException::withMessages(['email' => $status === Password::RESET_THROTTLED
+                ? __($status)
+                : 'This reset link is invalid or has expired. Request a new one.']);
         }
 
         session()->flash('status', 'Password reset — you can sign in now.');

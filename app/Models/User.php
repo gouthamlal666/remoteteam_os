@@ -130,6 +130,16 @@ class User extends Authenticatable
             : null;
     }
 
+    public function attendanceRecords(): HasMany
+    {
+        return $this->hasMany(AttendanceRecord::class);
+    }
+
+    public function leaveRequests(): HasMany
+    {
+        return $this->hasMany(LeaveRequest::class);
+    }
+
     public function timeEntries(): HasMany
     {
         return $this->hasMany(TimeEntry::class);
@@ -227,6 +237,18 @@ class User extends Authenticatable
     public function scopeActive(Builder $query): void
     {
         $query->where('is_active', true);
+    }
+
+    /** Super admins own the company: they don't mark attendance or take leave. */
+    public function tracksAttendance(): bool
+    {
+        return ! $this->isSuperAdmin();
+    }
+
+    /** Active people whose attendance and leave are tracked. */
+    public function scopeEmployees(Builder $query): void
+    {
+        $query->where('is_active', true)->where('role', '!=', Role::SuperAdmin->value);
     }
 
     public function scopeRole(Builder $query, Role $role): void

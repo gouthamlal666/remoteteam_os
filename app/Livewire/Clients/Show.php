@@ -5,7 +5,6 @@ namespace App\Livewire\Clients;
 use App\Livewire\Forms\ClientForm;
 use App\Models\Client;
 use App\Models\ClientCredential;
-use App\Models\ClientFile;
 use App\Models\ClientLink;
 use App\Services\ActivityLogger;
 use App\Services\ClientService;
@@ -79,17 +78,21 @@ class Show extends Component
 
     public string $credNotes = '';
 
-    // File upload
-    public $upload;
+    // Extra detail dialog
+    public bool $showDetail = false;
 
-    public string $fileType = 'contract';
+    public ?int $detailId = null;
 
-    public string $fileTitle = '';
+    public string $detailLabel = '';
+
+    public string $detailValue = '';
+
+    public string $credCategory = 'other';
 
     public function mount(Client $client): void
     {
         $this->authorize('view', $client);
-        $this->tab = in_array($this->tab, ['overview', 'projects', 'links', 'vault', 'files'], true) ? $this->tab : 'overview';
+        $this->tab = in_array($this->tab, ['overview', 'projects', 'links', 'vault', 'drive'], true) ? $this->tab : 'overview';
     }
 
     // ── Client details ─────────────────────────────────────────
@@ -288,6 +291,7 @@ class Show extends Component
         $credential = $id ? $this->client->credentials()->findOrFail($id) : null;
 
         $this->credentialId = $credential?->id;
+        $this->credCategory = $credential?->category ?? 'other';
         $this->credLabel = (string) $credential?->label;
         $this->credUrl = (string) $credential?->url;
         $this->credUsername = (string) $credential?->username;
@@ -303,6 +307,7 @@ class Show extends Component
         abort_unless($this->vaultUnlocked(), 403, 'Unlock the vault first.');
 
         $data = $this->validate([
+            'credCategory' => ['required', Rule::in(array_keys(ClientCredential::CATEGORIES))],
             'credLabel' => ['required', 'string', 'max:150'],
             'credUrl' => ['nullable', 'url:http,https', 'max:2048'],
             'credUsername' => ['nullable', 'string', 'max:255'],
@@ -311,6 +316,7 @@ class Show extends Component
         ], [], ['credLabel' => 'name', 'credUrl' => 'login URL', 'credPassword' => 'password']);
 
         $values = [
+            'category' => $data['credCategory'],
             'label' => $data['credLabel'],
             'url' => $data['credUrl'] ?: null,
             'username' => $data['credUsername'] ?: null,
@@ -342,33 +348,46 @@ class Show extends Component
         $credential->delete();
     }
 
-    // ── Files ──────────────────────────────────────────────────
+    // ── Extra details ──────────────────────────────────────────
 
-    public function uploadFile(ClientService $clients): void
+    public function editDetail(?int $id = null): void
     {
         $this->authorize('update', $this->client);
-        $this->validate([
-            'upload' => ['required', 'file', 'max:20480', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,txt,csv,jpg,jpeg,png,webp,gif,zip,ai,psd,eps,mp4,mov'],
-            'fileType' => ['required', Rule::in(array_keys(ClientFile::TYPES))],
-            'fileTitle' => ['nullable', 'string', 'max:150'],
-        ], [], ['upload' => 'file']);
-
-        $clients->addFile(auth()->user(), $this->client, $this->upload, $this->fileType,
-            $this->fileTitle ?: pathinfo($this->upload->getClientOriginalName(), PATHINFO_FILENAME));
-
-        $this->reset('upload', 'fileTitle');
-        $this->dispatch('notify', message: 'File uploaded.');
+        $detail = $id ? $this->client->details()->findOrFail($id) : null;
+        $this->detailId = $detail?->id;
+        $this->detailLabel = (string) $detail?->label;
+        $this->detailValue = (string) $detail?->value;
+        $this->resetValidation();
+        $this->showDetail = true;
     }
 
-    public function deleteFile(int $id, ClientService $clients): void
+    public function saveDetail(): void
     {
         $this->authorize('update', $this->client);
-        $clients->deleteFile(auth()->user(), $this->client->files()->findOrFail($id));
+        $data = $this->validate([
+            'detailLabel' => ['required', 'string', 'max:100'],
+            'detailValue' => ['required', 'string', 'max:2000'],
+        ], [], ['detailLabel' => 'label', 'detailValue' => 'value']);
+
+        $this->client->details()->updateOrCreate(['id' => $this->detailId], [
+            'label' => $data['detailLabel'],
+            'value' => $data['detailValue'],
+            'position' => $this->detailId ? $this->client->details()->findOrFail($this->detailId)->position : (int) $this->client->details()->max('position') + 1,
+        ]);
+
+        $this->reset('showDetail', 'detailId', 'detailLabel', 'detailValue');
+        $this->dispatch('notify', message: 'Detail saved.');
+    }
+
+    public function deleteDetail(int $id): void
+    {
+        $this->authorize('update', $this->client);
+        $this->client->details()->findOrFail($id)->delete();
     }
 
     public function render()
     {
-        $this->client->load(['contacts', 'links', 'credentials.creator', 'files.uploader', 'creator']);
+        $this->client->load(['contacts', 'links', 'credentials.creator', 'details', 'creator']);
 
         return view('livewire.clients.show', [
             'summary' => $this->client->workSummary(),
@@ -377,6 +396,8 @@ class Show extends Component
                 : collect(),
             'unlocked' => $this->vaultUnlocked(),
             'credentialCount' => $this->client->credentials->count(),
+            'driveCount' => $this->client->files()->count(),
+            'recentDrive' => $this->tab === 'overview' ? $this->client->files()->latest()->limit(6)->get() : collect(),
         ])->title($this->client->name);
     }
 }

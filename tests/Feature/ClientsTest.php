@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\Clients\Drive;
 use App\Livewire\Clients\Index as Clients;
 use App\Livewire\Clients\Show as ClientPage;
 use App\Livewire\Projects\Index as Projects;
@@ -9,6 +10,7 @@ use App\Models\Client;
 use App\Models\ClientCredential;
 use App\Models\Project;
 use App\Models\User;
+use App\Services\ClientService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -125,12 +127,12 @@ class ClientsTest extends TestCase
         $credential = ClientCredential::factory()->create(['client_id' => $this->client->id, 'password' => 'Sup3r-Secret!']);
         $page = Livewire::actingAs($this->admin)->test(ClientPage::class, ['client' => $this->client]);
 
-        $this->assertNull($page->instance()->reveal($credential->id, app(\App\Services\ClientService::class)));
+        $this->assertNull($page->instance()->reveal($credential->id, app(ClientService::class)));
 
         $page->call('unlockVault', 'wrong-password')->assertHasErrors('vault');
         $page->call('unlockVault', 'password')->assertHasNoErrors();
 
-        $secret = $page->instance()->reveal($credential->id, app(\App\Services\ClientService::class));
+        $secret = $page->instance()->reveal($credential->id, app(ClientService::class));
         $this->assertSame('Sup3r-Secret!', $secret['password']);
 
         // Reveals are audited without the secret itself.
@@ -175,18 +177,16 @@ class ClientsTest extends TestCase
         $this->assertSame('Hostinger (main)', $credential->fresh()->label);
     }
 
-    public function test_files_upload_download_and_access(): void
+    public function test_drive_uploads_download_and_access(): void
     {
-        Livewire::actingAs($this->admin)->test(ClientPage::class, ['client' => $this->client])
-            ->set('upload', UploadedFile::fake()->create('agreement.pdf', 200, 'application/pdf'))
-            ->set('fileType', 'contract')
-            ->call('uploadFile')
+        Livewire::actingAs($this->admin)->test(Drive::class, ['client' => $this->client])
+            ->set('uploads', [UploadedFile::fake()->create('agreement.pdf', 200, 'application/pdf'), UploadedFile::fake()->image('logo.png')])
             ->assertHasNoErrors()
-            ->set('upload', UploadedFile::fake()->create('evil.php', 1))
-            ->call('uploadFile')
-            ->assertHasErrors('upload');
+            ->set('uploads', [UploadedFile::fake()->create('evil.php', 1)])
+            ->assertHasErrors('uploads.0');
 
-        $file = $this->client->files()->first();
+        $this->assertSame(2, $this->client->files()->count());
+        $file = $this->client->files()->where('title', 'agreement')->first();
         Storage::disk('local')->assertExists($file->path);
 
         $this->actingAs($this->admin)->get(route('client-files.show', $file))->assertOk();
@@ -217,5 +217,27 @@ class ClientsTest extends TestCase
     public function test_members_cannot_change_clients(): void
     {
         Livewire::actingAs(User::factory()->create())->test(ClientPage::class, ['client' => $this->client])->assertForbidden();
+        Livewire::actingAs(User::factory()->create())->test(Drive::class, ['client' => $this->client])->assertForbidden();
+    }
+
+    public function test_extra_details_and_login_categories(): void
+    {
+        Livewire::actingAs($this->admin)->test(ClientPage::class, ['client' => $this->client])
+            ->call('editDetail')
+            ->set('detailLabel', 'Hosting provider')
+            ->set('detailValue', 'Hostinger')
+            ->call('saveDetail')
+            ->assertHasNoErrors()
+            ->assertSee('Hostinger')
+            ->call('unlockVault', 'password')
+            ->call('editCredential')
+            ->set('credCategory', 'hosting')
+            ->set('credLabel', 'hPanel')
+            ->set('credPassword', 'x-secret-1')
+            ->call('saveCredential')
+            ->assertHasNoErrors();
+
+        $this->assertSame('Hostinger', $this->client->details()->first()->value);
+        $this->assertSame('hosting', $this->client->credentials()->first()->category);
     }
 }

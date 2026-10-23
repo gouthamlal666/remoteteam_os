@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\WhatsappMessage;
 use App\Services\ActivityLogger;
 use App\Services\WhatsApp\WhatsAppSender;
+use App\Services\WorkCalendar;
 use App\Support\Settings;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -36,6 +37,10 @@ class SystemSettings extends Component
 
     // Work
     public array $working_days = [];
+
+    public array $saturday_offs = [];
+
+    public int|string $late_grace_minutes = 15;
 
     public string $day_start = '';
 
@@ -95,6 +100,8 @@ class SystemSettings extends Component
         $this->company_name = (string) $s['general.company_name'];
         $this->default_timezone = (string) $s['general.default_timezone'];
         $this->working_days = (array) $s['work.working_days'];
+        $this->saturday_offs = array_map('strval', (array) $s['work.saturday_offs']);
+        $this->late_grace_minutes = (int) $s['work.late_grace_minutes'];
         $this->day_start = (string) $s['work.day_start'];
         $this->day_end = (string) $s['work.day_end'];
         $this->report_reminder_enabled = (bool) $s['work.report_reminder_enabled'];
@@ -163,6 +170,9 @@ class SystemSettings extends Component
             'day_start' => ['required', 'date_format:H:i'],
             'day_end' => ['required', 'date_format:H:i'],
             'report_reminder_time' => ['required', 'date_format:H:i'],
+            'saturday_offs' => ['array'],
+            'saturday_offs.*' => [Rule::in(['1', '2', '3', '4', '5'])],
+            'late_grace_minutes' => ['required', 'integer', 'min:0', 'max:240'],
         ], ['working_days.required' => 'Pick at least one working day.']);
 
         // Keep days in week order.
@@ -174,7 +184,10 @@ class SystemSettings extends Component
             'work.day_end' => $this->day_end,
             'work.report_reminder_enabled' => $this->report_reminder_enabled,
             'work.report_reminder_time' => $this->report_reminder_time,
+            'work.saturday_offs' => collect($this->saturday_offs)->map(fn ($n) => (int) $n)->unique()->sort()->values()->all(),
+            'work.late_grace_minutes' => (int) $this->late_grace_minutes,
         ]);
+        app(WorkCalendar::class)->forgetCache();
         $this->saved('work', $activity);
     }
 

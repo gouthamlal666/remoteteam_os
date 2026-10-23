@@ -6,6 +6,7 @@ use App\Enums\ProjectStatus;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Models\Activity;
+use App\Models\Client;
 use App\Models\Conversation;
 use App\Models\DailyReport;
 use App\Models\Department;
@@ -30,6 +31,11 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // Demo data with a known password: never seed a live site with it.
+        if (app()->isProduction()) {
+            throw new \RuntimeException('The demo seeder must not run in production.');
+        }
+
         mt_srand(42);
 
         $super = User::factory()->superAdmin()->create([
@@ -144,7 +150,7 @@ class DatabaseSeeder extends Seeder
             $owner = $admins[$dept];
             $project = Project::forceCreate([
                 'name' => $name,
-                'client_id' => $client === 'Internal' ? null : \App\Models\Client::firstOrCreate(['name' => $client], ['status' => 'active', 'industry' => 'E-commerce', 'website' => 'https://'.\Illuminate\Support\Str::slug($client).'.example', 'client_since' => today()->subMonths(8)])->id,
+                'client_id' => $client === 'Internal' ? null : Client::firstOrCreate(['name' => $client], ['status' => 'active', 'industry' => 'E-commerce', 'website' => 'https://'.Str::slug($client).'.example', 'client_since' => today()->subMonths(8)])->id,
                 'department_id' => $departments[$dept]->id,
                 'owner_id' => $owner->id, 'status' => $status, 'color' => $color,
                 'description' => "{$name} for {$client}. Tracks all work across design, development and marketing.",
