@@ -46,7 +46,7 @@ class TaskWorkflowTest extends TestCase
             ->call('openEditor', projectId: $project->id)
             ->set('title', 'Build Laravel API Authentication')
             ->set('priority', 'high')
-            ->set('deadline', '2026-10-05')
+            ->set('deadline', today()->addWeek()->toDateString())
             ->set('assignee_ids', [(string) $newcomer->id])
             ->set('files', [UploadedFile::fake()->create('requirements.pdf', 100)])
             ->call('save')

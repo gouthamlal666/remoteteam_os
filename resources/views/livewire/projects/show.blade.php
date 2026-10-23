@@ -8,7 +8,10 @@
                     <span class="text-slate-300">/</span>
                     <x-badge :color="$project->status->badge()">{{ $project->status->label() }}</x-badge>
                 </div>
-                <a href="{{ route('projects.index', ['client' => $project->client ?: 'Internal']) }}" wire:navigate class="mt-1 block text-2xl font-bold text-slate-900 hover:text-indigo-700" title="All projects for this client">{{ $project->client ?: 'Internal' }}</a>
+<div class="mt-1 flex items-center gap-2">
+                    @if ($project->client) <x-client-logo :client="$project->client" size="size-8 text-xs" /> @endif
+                    <a href="{{ $project->client && auth()->user()->can('view', $project->client) ? route('clients.show', $project->client) : route('projects.index', ['client' => $project->client_id ?? 'internal']) }}" wire:navigate class="block text-2xl font-bold text-slate-900 hover:text-indigo-700" title="{{ $project->client ? 'Open client' : 'All internal projects' }}">{{ $project->clientName() }}</a>
+                </div>
                 <h2 class="text-lg font-semibold text-slate-600">{{ $project->name }}</h2>
                 <p class="text-sm text-slate-500">
                     @if ($project->department) {{ $project->department->name }} · @endif

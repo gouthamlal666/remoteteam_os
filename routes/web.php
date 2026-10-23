@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\ChatAttachmentController;
+use App\Http\Controllers\ClientFileController;
 use App\Http\Controllers\DirectMessageController;
 use App\Http\Controllers\EmployeeFileController;
 use App\Livewire;
@@ -35,6 +36,11 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::livewire('/tasks', Livewire\Tasks\Index::class)->name('tasks.index');
     Route::livewire('/tasks/{task}', Livewire\Tasks\Show::class)->name('tasks.show');
     Route::get('/attachments/{attachment}', [AttachmentController::class, 'download'])->name('attachments.download');
+
+    Route::livewire('/clients', Livewire\Clients\Index::class)->name('clients.index');
+    Route::livewire('/clients/{client}', Livewire\Clients\Show::class)->name('clients.show');
+    Route::get('/clients/{client}/logo', [ClientFileController::class, 'logo'])->name('clients.logo');
+    Route::get('/client-files/{file}', [ClientFileController::class, 'download'])->name('client-files.show');
 
     Route::livewire('/people', Livewire\Users\Index::class)->name('users.index');
     Route::livewire('/people/{user}', Livewire\Users\Show::class)->name('users.show');

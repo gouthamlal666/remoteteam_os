@@ -14,8 +14,9 @@
             <select wire:model.live="client" class="input w-auto max-w-56" aria-label="Filter by client">
                 <option value="">All clients</option>
                 @foreach ($clients as $c)
-                    <option value="{{ $c }}">{{ $c }}</option>
+                    <option value="{{ $c->id }}">{{ $c->name }}</option>
                 @endforeach
+                <option value="internal">Internal (no client)</option>
             </select>
         </div>
         @can('create', \App\Models\Project::class)
@@ -26,12 +27,19 @@
     @if ($clientSummary)
         <section class="overflow-hidden rounded-xl border border-indigo-100 bg-white">
             <div class="flex flex-wrap items-center gap-4 border-b border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-white px-5 py-4">
-                <span class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-lg font-bold text-white">{{ mb_strtoupper(mb_substr($client, 0, 1)) }}</span>
+                @if ($selectedClient)
+                    <x-client-logo :client="$selectedClient" size="size-12 text-lg" />
+                @else
+                    <span class="flex size-12 shrink-0 items-center justify-center rounded-xl bg-slate-200 text-lg font-bold text-slate-600">IN</span>
+                @endif
                 <div class="min-w-0 flex-1">
                     <p class="text-xs font-medium tracking-wide text-indigo-600 uppercase">Client</p>
-                    <h2 class="truncate text-xl font-semibold text-slate-900">{{ $client }}</h2>
+                    <h2 class="truncate text-xl font-semibold text-slate-900">{{ $clientLabel }}</h2>
                 </div>
                 <div class="flex items-center gap-2">
+                    @if ($selectedClient && auth()->user()->can('view', $selectedClient))
+                        <a href="{{ route('clients.show', $selectedClient) }}" wire:navigate class="btn-secondary py-1.5">Client profile</a>
+                    @endif
                     <a href="{{ route('tasks.index', ['client' => $client, 'scope' => 'all']) }}" wire:navigate class="btn-secondary py-1.5">View all tasks</a>
                     <button wire:click="clearClient" class="btn-secondary py-1.5"><x-icon name="x" class="size-4" /> All clients</button>
                 </div>
@@ -65,7 +73,7 @@
                                 </a>
                             </li>
                         @empty
-                            <li><x-empty class="py-6">No open tasks for {{ $client }} 🎉</x-empty></li>
+                            <li><x-empty class="py-6">No open tasks for {{ $clientLabel }} 🎉</x-empty></li>
                         @endforelse
                     </ul>
                     @if ($clientSummary['open'] > $clientSummary['openTasks']->count())
@@ -74,7 +82,7 @@
                 </div>
             </div>
         </section>
-        <h3 class="pt-2 text-sm font-semibold text-slate-700">{{ $client }}'s projects</h3>
+        <h3 class="pt-2 text-sm font-semibold text-slate-700">{{ $clientLabel }}'s projects</h3>
     @endif
 
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -89,9 +97,11 @@
             <div class="group relative flex h-full flex-col rounded-xl border border-t-4 border-slate-200 bg-white p-4 transition hover:shadow-md {{ \App\Support\Palette::bar($project->color) }}">
                 <div class="flex items-start justify-between gap-2">
                     <div class="min-w-0">
-                        @php $clientName = $project->client ?: 'Internal'; @endphp
-                        <button type="button" wire:click="$set('client', @js($clientName))" title="Show only {{ $clientName }}'s projects and tasks"
-                                class="relative z-10 block max-w-full truncate text-left text-lg leading-tight font-bold text-slate-900 decoration-indigo-300 decoration-2 underline-offset-4 hover:text-indigo-700 hover:underline">{{ $clientName }}</button>
+                        <div class="flex items-center gap-2">
+                            @if ($project->client) <x-client-logo :client="$project->client" size="size-7 text-[10px]" class="relative z-10" /> @endif
+                            <button type="button" wire:click="$set('client', @js($project->client_id ? (string) $project->client_id : 'internal'))" title="Show only {{ $project->clientName() }}'s projects and tasks"
+                                    class="relative z-10 block max-w-full truncate text-left text-lg leading-tight font-bold text-slate-900 decoration-indigo-300 decoration-2 underline-offset-4 hover:text-indigo-700 hover:underline">{{ $project->clientName() }}</button>
+                        </div>
                         <h3 class="mt-0.5 truncate text-sm font-medium text-slate-600 group-hover:text-indigo-700">
                             {{-- Stretched link: the whole card opens the project --}}
                             <a href="{{ route('projects.show', $project) }}" wire:navigate class="after:absolute after:inset-0 after:rounded-xl">{{ $project->name }}</a>
@@ -130,7 +140,7 @@
             </div>
             </div>
         @empty
-            <div class="col-span-full rounded-xl border border-dashed border-slate-300 bg-white"><x-empty>{{ $client ? "No projects for {$client} match these filters." : 'No projects found.' }}</x-empty></div>
+            <div class="col-span-full rounded-xl border border-dashed border-slate-300 bg-white"><x-empty>{{ $client ? "No projects for {$clientLabel} match these filters." : 'No projects found.' }}</x-empty></div>
         @endforelse
     </div>
 

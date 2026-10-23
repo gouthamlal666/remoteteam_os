@@ -3,7 +3,11 @@
 <span {{ $attributes->merge(['class' => "$size relative inline-flex shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700 ring-2 ring-white"]) }}
       title="{{ $user->name }}{{ $presence && $user->isOnline() ? ' · online' : '' }}">
     @if ($photo)
-        <img src="{{ $photo }}" alt="" class="size-full rounded-full object-cover" loading="lazy">
+        {{-- Falls back to initials if the photo file is missing. --}}
+        <span x-data="{ failed: false }" class="contents">
+            <img x-show="! failed" x-on:error="failed = true" src="{{ $photo }}" alt="" class="size-full rounded-full object-cover" loading="lazy">
+            <span x-show="failed" x-cloak>{{ $user->initials() }}</span>
+        </span>
     @else
         {{ $user->initials() }}
     @endif

@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['name', 'client', 'description', 'department_id', 'owner_id', 'status', 'color', 'start_date', 'deadline'])]
+#[Fillable(['name', 'client_id', 'description', 'department_id', 'owner_id', 'status', 'color', 'start_date', 'deadline'])]
 class Project extends Model
 {
     use HasFactory;
@@ -24,6 +24,17 @@ class Project extends Model
             'start_date' => 'date',
             'deadline' => 'date',
         ];
+    }
+
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class);
+    }
+
+    /** Client name for display; projects without a client are internal. */
+    public function clientName(): string
+    {
+        return $this->client?->name ?? 'Internal';
     }
 
     public function owner(): BelongsTo

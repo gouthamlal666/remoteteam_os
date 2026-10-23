@@ -1,14 +1,24 @@
 {{-- Shared project form. Expects $form (ProjectForm), $departments, $people. --}}
 <form wire:submit="saveProject" class="grid gap-4 sm:grid-cols-2">
-    <x-field label="Client" for="p-client" error="form.client" class="sm:col-span-2">
-        <input wire:model="form.client" id="p-client" list="p-client-options" class="input text-base font-medium" placeholder="e.g. ShopNest (leave empty for internal projects)" autocomplete="off">
-        <datalist id="p-client-options">
-            @foreach ($clients ?? [] as $c)
-                @if ($c !== 'Internal') <option value="{{ $c }}"></option> @endif
-            @endforeach
-        </datalist>
-        <p class="text-xs text-slate-400">Pick an existing client so their projects stay grouped together, or type a new one.</p>
-    </x-field>
+    <div class="sm:col-span-2" x-data="{ adding: @js(filled($form->new_client)) }">
+        <x-field label="Client" for="p-client" error="form.client_id">
+            <div x-show="! adding" class="flex gap-2">
+                <select wire:model="form.client_id" id="p-client" class="input text-base font-medium">
+                    <option value="">— Internal project (no client) —</option>
+                    @foreach ($clients ?? [] as $c)
+                        <option value="{{ $c->id }}">{{ $c->name }}</option>
+                    @endforeach
+                </select>
+                <button type="button" x-on:click="adding = true; $wire.set('form.client_id', '', false); $nextTick(() => $refs.newClient.focus())" class="btn-secondary shrink-0 whitespace-nowrap"><x-icon name="plus" class="size-4" /> New client</button>
+            </div>
+            <div x-show="adding" x-cloak class="flex gap-2">
+                <input x-ref="newClient" wire:model="form.new_client" class="input text-base font-medium" placeholder="New client name, e.g. ShopNest">
+                <button type="button" x-on:click="adding = false; $wire.set('form.new_client', '', false)" class="btn-secondary shrink-0">Pick existing</button>
+            </div>
+            @error('form.new_client') <p class="text-xs text-red-600">{{ $message }}</p> @enderror
+            <p class="text-xs text-slate-400" x-text="adding ? 'The client is created when you save. Add their details, links and logins later on the Clients page.' : 'Choose the client this project is for.'"></p>
+        </x-field>
+    </div>
     <x-field label="Project name" for="p-name" error="form.name" class="sm:col-span-2">
         <input wire:model="form.name" id="p-name" class="input" placeholder="Client Website">
     </x-field>

@@ -35,7 +35,7 @@ class Index extends Component
     #[Url(except: '')]
     public string $assignee = '';
 
-    /** Client (business) name, set from the Projects page. */
+    /** Client id (or "internal"), set from the Projects or Clients page. */
     #[Url(except: '')]
     public string $client = '';
 
@@ -119,6 +119,7 @@ class Index extends Component
             'projects' => Project::visibleTo($user)
                 ->when($this->client, fn ($q) => \App\Livewire\Projects\Index::applyClientFilter($q, $this->client))
                 ->orderBy('name')->get(['id', 'name']),
+            'clientLabel' => $this->client === 'internal' ? 'Internal' : (ctype_digit($this->client) ? \App\Models\Client::find((int) $this->client)?->name : null),
             'people' => $user->isManager() ? User::active()->orderBy('name')->get(['id', 'name']) : collect(),
         ]);
     }

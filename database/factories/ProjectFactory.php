@@ -14,7 +14,7 @@ class ProjectFactory extends Factory
     {
         return [
             'name' => fake()->catchPhrase(),
-            'client' => fake()->company(),
+            'client_id' => null,
             'description' => fake()->paragraph(),
             'owner_id' => User::factory()->admin(),
             'status' => ProjectStatus::Active,

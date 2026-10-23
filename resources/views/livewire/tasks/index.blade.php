@@ -14,7 +14,7 @@
         <div class="flex items-center gap-2 text-sm">
             <span class="text-slate-500">Client:</span>
             <span class="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 py-1 pr-1 pl-3 font-medium text-indigo-700 ring-1 ring-indigo-200">
-                <a href="{{ route('projects.index', ['client' => $client]) }}" wire:navigate class="hover:underline">{{ $client }}</a>
+                <a href="{{ route('projects.index', ['client' => $client]) }}" wire:navigate class="hover:underline">{{ $clientLabel ?? 'Unknown client' }}</a>
                 <button wire:click="$set('client', '')" class="rounded-full p-0.5 hover:bg-indigo-100" aria-label="Remove client filter"><x-icon name="x" class="size-3.5" /></button>
             </span>
         </div>

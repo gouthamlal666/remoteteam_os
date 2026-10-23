@@ -112,7 +112,7 @@ class Show extends Component
     public function render()
     {
         $user = auth()->user();
-        $this->project->load(['owner', 'department', 'members.department']);
+        $this->project->load(['owner', 'department', 'members.department', 'client']);
 
         $tasks = $this->project->tasks()->with('assignees')
             ->withCount(['checklistItems', 'checklistItems as checklist_done_count' => fn ($q) => $q->where('is_done', true)])
@@ -135,7 +135,7 @@ class Show extends Component
             'canManage' => $canManage,
             'departments' => $canManage ? Department::orderBy('name')->get(['id', 'name']) : collect(),
             'people' => $canManage ? User::active()->orderBy('name')->get(['id', 'name', 'job_title']) : collect(),
-            'clients' => $canManage ? Project::visibleTo($user)->whereNotNull('client')->where('client', '!=', '')->distinct()->orderBy('client')->pluck('client') : collect(),
+            'clients' => $canManage ? \App\Models\Client::orderBy('name')->get(['id', 'name']) : collect(),
         ])->title($this->project->name);
     }
 }

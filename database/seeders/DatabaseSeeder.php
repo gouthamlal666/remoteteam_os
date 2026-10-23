@@ -143,7 +143,9 @@ class DatabaseSeeder extends Seeder
         foreach ($plan as [$name, $client, $dept, $status, $color, $start, $end, $team, $tasks]) {
             $owner = $admins[$dept];
             $project = Project::forceCreate([
-                'name' => $name, 'client' => $client, 'department_id' => $departments[$dept]->id,
+                'name' => $name,
+                'client_id' => $client === 'Internal' ? null : \App\Models\Client::firstOrCreate(['name' => $client], ['status' => 'active', 'industry' => 'E-commerce', 'website' => 'https://'.\Illuminate\Support\Str::slug($client).'.example', 'client_since' => today()->subMonths(8)])->id,
+                'department_id' => $departments[$dept]->id,
                 'owner_id' => $owner->id, 'status' => $status, 'color' => $color,
                 'description' => "{$name} for {$client}. Tracks all work across design, development and marketing.",
                 'start_date' => today()->addDays($start), 'deadline' => today()->addDays($end),

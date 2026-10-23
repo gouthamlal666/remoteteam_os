@@ -22,6 +22,7 @@
         ['label' => $user->isMember() ? 'My Tasks' : 'Tasks', 'route' => 'tasks.index', 'icon' => 'check', 'match' => 'tasks.*'],
     ];
     if ($user->isManager()) {
+        $nav[] = ['label' => 'Clients', 'route' => 'clients.index', 'icon' => 'briefcase', 'match' => 'clients.*'];
         $nav[] = ['label' => 'People', 'route' => 'users.index', 'icon' => 'users', 'match' => 'users.*'];
     }
     if ($user->isSuperAdmin()) {

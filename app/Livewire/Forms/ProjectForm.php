@@ -19,7 +19,11 @@ class ProjectForm extends Form
 
     public string $name = '';
 
-    public string $client = '';
+    /** Existing client id ('' = internal project). */
+    public string $client_id = '';
+
+    /** Filled when creating a brand-new client from the project form. */
+    public string $new_client = '';
 
     public string $description = '';
 
@@ -40,7 +44,8 @@ class ProjectForm extends Form
     {
         $this->project = $project;
         $this->fill($project->only(['name', 'department_id', 'color']));
-        $this->client = (string) $project->client;
+        $this->client_id = (string) ($project->client_id ?? '');
+        $this->new_client = '';
         $this->description = (string) $project->description;
         $this->status = $project->status->value;
         $this->start_date = $project->start_date?->toDateString();
@@ -52,7 +57,8 @@ class ProjectForm extends Form
     {
         return [
             'name' => ['required', 'string', 'max:150'],
-            'client' => ['nullable', 'string', 'max:150'],
+            'client_id' => ['nullable', 'exists:clients,id'],
+            'new_client' => ['nullable', 'string', 'max:150'],
             'description' => ['nullable', 'string', 'max:5000'],
             'department_id' => ['nullable', 'exists:departments,id'],
             'status' => ['required', new Enum(ProjectStatus::class)],
@@ -68,7 +74,12 @@ class ProjectForm extends Form
     {
         $data = $this->validate();
         $members = array_map('intval', $data['member_ids']);
-        unset($data['member_ids']);
+
+        // "+ New client" creates (or reuses) a client with that name.
+        $data['client_id'] = filled($data['new_client'])
+            ? app(\App\Services\ClientService::class)->quickCreate($actor, $data['new_client'])->id
+            : ($data['client_id'] ?: null);
+        unset($data['member_ids'], $data['new_client']);
 
         $data['start_date'] = $data['start_date'] ?: null;
         $data['deadline'] = $data['deadline'] ?: null;

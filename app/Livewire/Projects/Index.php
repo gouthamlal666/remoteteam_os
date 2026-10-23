@@ -4,6 +4,7 @@ namespace App\Livewire\Projects;
 
 use App\Enums\TaskStatus;
 use App\Livewire\Forms\ProjectForm;
+use App\Models\Client;
 use App\Models\Department;
 use App\Models\Project;
 use App\Models\Task;
@@ -29,16 +30,24 @@ class Index extends Component
     #[Url(except: '')]
     public string $status = '';
 
-    /** Client (business) name to focus on; "Internal" also matches projects with no client. */
+    /** Client id to focus on, or "internal" for projects without a client. */
     #[Url(except: '')]
     public string $client = '';
 
-    /** Restricts a project query to the selected client. */
-    public static function applyClientFilter(Builder $query, string $client, string $column = 'client'): void
+    /** Restricts a project query to the selected client id ("internal" = no client). */
+    public static function applyClientFilter(Builder $query, string $client): void
     {
-        $query->where(fn (Builder $q) => $client === 'Internal'
-            ? $q->where($column, 'Internal')->orWhereNull($column)->orWhere($column, '')
-            : $q->where($column, $client));
+        $client === 'internal'
+            ? $query->whereNull('client_id')
+            : $query->where('client_id', (int) $client);
+    }
+
+    /** ?new=1 (e.g. from a client's page) opens the new-project form straight away. */
+    public function mount(): void
+    {
+        if (request()->boolean('new') && auth()->user()->can('create', Project::class)) {
+            $this->create();
+        }
     }
 
     public function create(): void
@@ -46,6 +55,7 @@ class Index extends Component
         $this->authorize('create', Project::class);
         $this->form->reset();
         $this->form->department_id = auth()->user()->department_id;
+        $this->form->client_id = ctype_digit($this->client) ? $this->client : '';
         $this->resetValidation();
         $this->showForm = true;
     }
@@ -100,24 +110,29 @@ class Index extends Component
         $user = auth()->user();
 
         $projects = Project::visibleTo($user)
-            ->with(['members', 'department'])
+            ->with(['members', 'department', 'client'])
             ->withProgressCounts()
             ->withCount(['tasks as overdue_tasks_count' => fn ($q) => $q->overdue()])
             ->when($this->search, fn ($q) => $q->where(fn ($q) => $q
                 ->where('name', 'like', "%{$this->search}%")
-                ->orWhere('client', 'like', "%{$this->search}%")))
+                ->orWhereHas('client', fn ($c) => $c->where('name', 'like', "%{$this->search}%"))))
             ->when($this->status, fn ($q) => $q->where('status', $this->status))
             ->when($this->client, fn ($q) => self::applyClientFilter($q, $this->client))
             ->orderByRaw("case status when 'active' then 0 when 'planning' then 1 when 'on_hold' then 2 else 3 end")
             ->orderByRaw('deadline is null, deadline')
             ->get();
 
-        $clients = Project::visibleTo($user)->pluck('client')
-            ->map(fn ($c) => filled($c) ? $c : 'Internal')->unique()->sort(SORT_NATURAL | SORT_FLAG_CASE)->values();
+        // Clients that have projects this person can see (managers also see clients without projects, for the form).
+        $clients = $user->isManager()
+            ? Client::orderBy('name')->get(['id', 'name', 'logo_path'])
+            : Client::whereHas('projects', fn ($q) => $q->visibleTo($user))->orderBy('name')->get(['id', 'name', 'logo_path']);
+        $selectedClient = ctype_digit($this->client) ? $clients->firstWhere('id', (int) $this->client) : null;
 
         return view('livewire.projects.index', [
             'projects' => $projects,
             'clients' => $clients,
+            'selectedClient' => $selectedClient,
+            'clientLabel' => $this->client === 'internal' ? 'Internal' : $selectedClient?->name,
             'clientSummary' => $this->client ? $this->clientSummary($user) : null,
             'departments' => $user->isManager() ? Department::orderBy('name')->get(['id', 'name']) : collect(),
             'people' => $user->isManager() ? User::active()->orderBy('name')->get(['id', 'name', 'job_title']) : collect(),
