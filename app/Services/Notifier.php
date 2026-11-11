@@ -9,8 +9,8 @@ use App\Models\Task;
 use App\Models\User;
 use App\Notifications\Alert;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
+use Throwable;
 
 /**
  * Decides who hears about what. The person who triggered an event is never
@@ -26,8 +26,16 @@ class Notifier
             ->reject(fn (User $u) => $actor && $u->is($actor))
             ->filter(fn (User $u) => $u->is_active);
 
-        if ($users->isNotEmpty()) {
-            Notification::send($users, $alert);
+        $alert->inboxRecipientId = $users->first(fn (User $u) => $u->isManager() && ($u->email_notifications ?? true))?->id;
+
+        // One person at a time: if email (or WhatsApp) fails, the in-app notification is
+        // already saved and everyone else still gets theirs.
+        foreach ($users as $user) {
+            try {
+                $user->notify($alert);
+            } catch (Throwable $e) {
+                report($e);
+            }
         }
     }
 

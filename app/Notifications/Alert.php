@@ -24,11 +24,21 @@ class Alert extends Notification
         public bool $mail = false,
     ) {}
 
+    /** When several admins get the same alert, only this one's copy is emailed to the shared inbox. */
+    public ?int $inboxRecipientId = null;
+
+    private function goesToAdminInbox(User $notifiable): bool
+    {
+        return $notifiable->isManager() && Settings::adminInbox() !== null;
+    }
+
     public function via(User $notifiable): array
     {
         $channels = ['database'];
 
-        if ($this->mail && ($notifiable->email_notifications ?? true) && Settings::get('notifications.email_enabled')) {
+        $duplicateForInbox = $this->goesToAdminInbox($notifiable) && $this->inboxRecipientId !== null && $this->inboxRecipientId !== $notifiable->id;
+
+        if ($this->mail && ! $duplicateForInbox && ($notifiable->email_notifications ?? true) && Settings::get('notifications.email_enabled')) {
             $channels[] = 'mail';
         }
 
@@ -67,7 +77,7 @@ class Alert extends Notification
     {
         return (new MailMessage)
             ->subject($this->title)
-            ->greeting('Hi '.strtok($notifiable->name, ' ').',')
+            ->greeting($this->goesToAdminInbox($notifiable) ? 'Hello admin team,' : 'Hi '.strtok($notifiable->name, ' ').',')
             ->line($this->body)
             ->action('Open in RemoteTeam OS', $this->url)
             ->line('You can turn off email notifications in Settings.')

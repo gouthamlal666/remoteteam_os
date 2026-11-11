@@ -32,6 +32,8 @@ class Settings
         'work.report_reminder_time' => '18:00',
 
         'notifications.email_enabled' => true,
+        // Emails meant for admins / the super admin go to this one inbox (empty = their own emails).
+        'notifications.admin_inbox' => null,
         'notifications.whatsapp_enabled' => false,
         'whatsapp.driver' => 'log',
         'whatsapp.default_country_code' => '+91',
@@ -132,6 +134,12 @@ class Settings
         }
 
         return array_merge(self::DEFAULTS, $stored);
+    }
+
+    /** Shared inbox for admin emails: System settings first, then MAIL_ADMIN_INBOX in .env. */
+    public static function adminInbox(): ?string
+    {
+        return self::get('notifications.admin_inbox') ?: (config('mail.admin_inbox') ?: null);
     }
 
     public static function companyName(): string

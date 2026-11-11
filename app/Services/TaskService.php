@@ -42,6 +42,36 @@ class TaskService
         });
     }
 
+    /**
+     * Creates a fresh copy of a task for new dates: same project, title,
+     * description, priority, estimate and (active) assignees, a reset
+     * checklist, status To Do. Comments, files and time logs aren't copied.
+     */
+    public function repeat(User $actor, Task $source, ?string $startDate, ?string $deadline, bool $withChecklist = true): Task
+    {
+        return DB::transaction(function () use ($actor, $source, $startDate, $deadline, $withChecklist) {
+            $copy = $this->create($actor, [
+                'project_id' => $source->project_id,
+                'title' => $source->title,
+                'description' => $source->description,
+                'priority' => $source->priority,
+                'estimated_hours' => $source->estimated_hours,
+                'start_date' => $startDate ?: null,
+                'deadline' => $deadline ?: null,
+            ], $source->assignees()->where('is_active', true)->pluck('users.id')->all());
+
+            if ($withChecklist) {
+                foreach ($source->checklistItems()->orderBy('position')->get() as $item) {
+                    $copy->checklistItems()->create(['title' => $item->title, 'position' => $item->position]);
+                }
+            }
+
+            $this->activity->log($actor, 'task.repeated', "repeated task \"{$source->title}\"", $copy);
+
+            return $copy;
+        });
+    }
+
     /** @param array<int> $assigneeIds */
     public function update(User $actor, Task $task, array $data, array $assigneeIds): Task
     {

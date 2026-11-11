@@ -8,6 +8,7 @@ enum TaskStatus: string
     case InProgress = 'in_progress';
     case Review = 'review';
     case Revision = 'revision';
+    case OnHold = 'on_hold';
     case Completed = 'completed';
 
     public function label(): string
@@ -17,6 +18,7 @@ enum TaskStatus: string
             self::InProgress => 'In Progress',
             self::Review => 'Review',
             self::Revision => 'Revision',
+            self::OnHold => 'On Hold',
             self::Completed => 'Completed',
         };
     }
@@ -28,6 +30,7 @@ enum TaskStatus: string
             self::InProgress => 'bg-blue-100 text-blue-700',
             self::Review => 'bg-amber-100 text-amber-800',
             self::Revision => 'bg-orange-100 text-orange-700',
+            self::OnHold => 'bg-purple-100 text-purple-700',
             self::Completed => 'bg-emerald-100 text-emerald-700',
         };
     }

@@ -51,7 +51,7 @@
                     'opacity-60' => ! $u->is_active,
                 ])>
                     {{-- Person --}}
-                    <a href="{{ route('users.show', $u) }}" wire:navigate class="group flex min-w-0 items-center gap-3">
+                    <a href="{{ route('users.show', $u) }}" wire:navigate.hover class="group flex min-w-0 items-center gap-3">
                         <x-avatar :user="$u" size="size-11 text-sm" presence />
                         <div class="min-w-0">
                             <p class="truncate font-semibold text-slate-900 group-hover:text-indigo-700">{{ $u->name }}</p>
@@ -110,7 +110,7 @@
                         <template x-teleport="body">
                             <div x-show="open" x-cloak x-anchor.bottom-end.offset.6="$refs.trigger" x-on:click.outside="if (! $refs.trigger.contains($event.target)) open = false" x-transition.origin.top.right
                                  class="z-50 w-72 overflow-hidden rounded-xl border border-slate-200 bg-white py-1.5 shadow-xl" role="menu">
-                                <a href="{{ route('users.show', $u) }}" wire:navigate class="flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50" role="menuitem">
+                                <a href="{{ route('users.show', $u) }}" wire:navigate.hover class="flex items-start gap-3 px-4 py-2.5 hover:bg-slate-50" role="menuitem">
                                     <x-icon name="user" class="mt-0.5 size-5 text-slate-400" />
                                     <span><span class="block text-sm font-medium text-slate-900">View profile</span><span class="block text-xs text-slate-500">Work, projects and performance</span></span>
                                 </a>

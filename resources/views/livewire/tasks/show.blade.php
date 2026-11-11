@@ -12,7 +12,7 @@
     <div class="space-y-6 lg:col-span-2">
         <div class="rounded-xl border border-slate-200 bg-white p-5">
             <div class="flex flex-wrap items-center gap-2 text-sm">
-                <a href="{{ route('projects.show', $task->project) }}" wire:navigate class="text-slate-500 hover:text-slate-700">{{ $task->project->name }}</a>
+                <a href="{{ route('projects.show', $task->project) }}" wire:navigate.hover class="text-slate-500 hover:text-slate-700">{{ $task->project->name }}</a>
                 <span class="text-slate-300">/</span>
                 <x-task-status :task="$task" />
                 <x-badge :color="$task->priority->badge()">{{ $task->priority->label() }} priority</x-badge>
@@ -26,8 +26,8 @@
             {{-- Workflow actions --}}
             <div class="mt-6 flex flex-wrap gap-2 border-t border-slate-100 pt-4">
                 @if ($task->isAssignedTo($user) || $user->can('update', $task))
-                    @if (in_array($task->status, [\App\Enums\TaskStatus::Todo, \App\Enums\TaskStatus::Revision]))
-                        <button wire:click="start" class="btn-secondary">Start working</button>
+                    @if (in_array($task->status, [\App\Enums\TaskStatus::Todo, \App\Enums\TaskStatus::Revision, \App\Enums\TaskStatus::OnHold]))
+                        <button wire:click="start" class="btn-secondary">{{ $task->status === \App\Enums\TaskStatus::OnHold ? 'Resume working' : 'Start working' }}</button>
                     @endif
                 @endif
                 @can('submit', $task)
@@ -39,6 +39,9 @@
                 @endcan
                 @can('update', $task)
                     <button x-on:click="$dispatch('open-task-editor', { taskId: {{ $task->id }} })" class="btn-secondary"><x-icon name="pencil" class="size-4" /> Edit</button>
+                    @can('create', [\App\Models\Task::class, $task->project])
+                        <button wire:click="openRepeat" class="btn-secondary"><x-icon name="repeat" class="size-4" /> Repeat task</button>
+                    @endcan
                     <button wire:click="delete" wire:confirm="Delete this task, its comments and files?" class="btn-secondary ml-auto text-red-600 hover:bg-red-50"><x-icon name="trash" class="size-4" /></button>
                 @endcan
             </div>
@@ -149,7 +152,7 @@
                 <p class="mb-2 text-xs font-medium text-slate-500 uppercase">Assignees</p>
                 <ul class="space-y-2">
                     @forelse ($task->assignees as $a)
-                        <li><a href="{{ route('users.show', $a) }}" wire:navigate class="flex items-center gap-2 text-sm hover:text-indigo-700"><x-avatar :user="$a" size="size-7" /> {{ $a->name }} <span class="text-xs text-slate-400">{{ $a->job_title }}</span></a></li>
+                        <li><a href="{{ route('users.show', $a) }}" wire:navigate.hover class="flex items-center gap-2 text-sm hover:text-indigo-700"><x-avatar :user="$a" size="size-7" /> {{ $a->name }} <span class="text-xs text-slate-400">{{ $a->job_title }}</span></a></li>
                     @empty
                         <li class="text-sm text-slate-400">Unassigned</li>
                     @endforelse
@@ -254,6 +257,27 @@
 </div>
 
     @can('update', $task)
+        <x-modal wire:model="showRepeat" title="Repeat task" max-width="max-w-md">
+            <form wire:submit="repeat" class="space-y-4">
+                <p class="text-sm text-slate-600">Creates a new copy of <strong>{{ $task->title }}</strong> with the same details and people. Just pick the new dates.</p>
+                <div class="flex flex-wrap gap-2">
+                    @foreach (['day' => '+1 day', 'week' => '+1 week', 'month' => '+1 month'] as $by => $label)
+                        <button type="button" wire:click="shiftRepeat('{{ $by }}')" class="btn-secondary px-3 py-1.5 text-xs">{{ $label }}</button>
+                    @endforeach
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <x-field label="Start date" for="rp-start" error="repeatStart"><input wire:model="repeatStart" id="rp-start" type="date" class="input"></x-field>
+                    <x-field label="Deadline" for="rp-deadline" error="repeatDeadline"><input wire:model="repeatDeadline" id="rp-deadline" type="date" class="input"></x-field>
+                </div>
+                @if ($task->checklistItems->isNotEmpty())
+                    <label class="flex items-center gap-2 text-sm text-slate-700"><input wire:model="repeatChecklist" type="checkbox" class="rounded border-slate-300 text-indigo-600"> Copy the checklist ({{ $task->checklistItems->count() }} items, unticked)</label>
+                @endif
+                <div class="flex justify-end gap-2">
+                    <button type="button" x-on:click="open = false" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary" wire:loading.attr="disabled">Create copy</button>
+                </div>
+            </form>
+        </x-modal>
         <livewire:tasks.task-editor />
     @endcan
 </div>

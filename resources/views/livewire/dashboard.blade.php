@@ -34,7 +34,7 @@
                 <ul class="divide-y divide-slate-100">
                     @forelse ($focusTasks as $task)
                         <li>
-                            <a href="{{ route('tasks.show', $task) }}" wire:navigate class="flex items-center gap-3 px-4 py-3 hover:bg-slate-50">
+                            <a href="{{ route('tasks.show', $task) }}" wire:navigate.hover class="flex items-center gap-3 px-4 py-3 hover:bg-slate-50">
                                 <div class="min-w-0 flex-1">
                                     <p class="truncate text-sm font-medium text-slate-900">{{ $task->title }}</p>
                                     <p class="truncate text-xs text-slate-500">{{ $task->project->name }} · {{ $task->assignees->pluck('name')->join(', ') ?: 'Unassigned' }}</p>
@@ -53,12 +53,12 @@
 
             <x-card title="Active projects">
                 <x-slot:actions>
-                    <a href="{{ route('projects.index') }}" wire:navigate class="text-sm text-indigo-600 hover:underline">View all</a>
+                    <a href="{{ route('projects.index') }}" wire:navigate.hover class="text-sm text-indigo-600 hover:underline">View all</a>
                 </x-slot:actions>
                 <ul class="divide-y divide-slate-100">
                     @forelse ($projects as $project)
                         <li>
-                            <a href="{{ route('projects.show', $project) }}" wire:navigate class="block px-4 py-3 hover:bg-slate-50">
+                            <a href="{{ route('projects.show', $project) }}" wire:navigate.hover class="block px-4 py-3 hover:bg-slate-50">
                                 <div class="flex items-center justify-between gap-3 text-sm">
                                     <span class="truncate font-medium text-slate-900">{{ $project->name }}</span>
                                     <span class="shrink-0 text-xs text-slate-500">{{ $project->completed_tasks_count }}/{{ $project->tasks_count }} tasks · {{ $project->progress() }}%</span>
@@ -75,7 +75,7 @@
 
         <div class="space-y-6">
             @unless ($reportedToday)
-                <a href="{{ route('reports.index') }}" wire:navigate class="flex items-center gap-3 rounded-xl border border-indigo-200 bg-indigo-50 p-4 hover:bg-indigo-100">
+                <a href="{{ route('reports.index') }}" wire:navigate.hover class="flex items-center gap-3 rounded-xl border border-indigo-200 bg-indigo-50 p-4 hover:bg-indigo-100">
                     <x-icon name="chart" class="size-6 text-indigo-600" />
                     <span class="text-sm"><span class="block font-semibold text-indigo-900">Submit today's report</span><span class="text-indigo-700">What you did, what's next, any blockers.</span></span>
                 </a>
@@ -83,7 +83,7 @@
 
             <x-card title="Upcoming meetings">
                 <x-slot:actions>
-                    <a href="{{ route('meetings.index') }}" wire:navigate class="text-sm text-indigo-600 hover:underline">View all</a>
+                    <a href="{{ route('meetings.index') }}" wire:navigate.hover class="text-sm text-indigo-600 hover:underline">View all</a>
                 </x-slot:actions>
                 <div class="divide-y divide-slate-100">
                     @forelse ($meetings as $meeting)

@@ -28,8 +28,9 @@ class ProjectPolicy
         return $user->isManager() && $this->view($user, $project);
     }
 
+    /** Super admins, the owner, and admins (who manage every project they can see). */
     public function delete(User $user, Project $project): bool
     {
-        return $user->isSuperAdmin() || $project->owner_id === $user->id;
+        return $user->isSuperAdmin() || $project->owner_id === $user->id || ($user->isAdmin() && $this->view($user, $project));
     }
 }

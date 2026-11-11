@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\Role;
 use App\Enums\TaskStatus;
+use App\Support\Settings;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -226,6 +227,12 @@ class User extends Authenticatable
     public function isManager(): bool
     {
         return $this->isSuperAdmin() || $this->isAdmin();
+    }
+
+    /** Admins and the super admin get emails in the shared admin inbox when one is set. */
+    public function routeNotificationForMail(): string
+    {
+        return $this->isManager() && ($inbox = Settings::adminInbox()) ? $inbox : $this->email;
     }
 
     public function initials(): string

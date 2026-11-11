@@ -53,6 +53,8 @@ class SystemSettings extends Component
     // Notifications & WhatsApp
     public bool $email_enabled = true;
 
+    public string $admin_inbox = '';
+
     public bool $whatsapp_enabled = false;
 
     public string $whatsapp_driver = 'log';
@@ -107,6 +109,7 @@ class SystemSettings extends Component
         $this->report_reminder_enabled = (bool) $s['work.report_reminder_enabled'];
         $this->report_reminder_time = (string) $s['work.report_reminder_time'];
         $this->email_enabled = (bool) $s['notifications.email_enabled'];
+        $this->admin_inbox = (string) Settings::adminInbox();
         $this->whatsapp_enabled = (bool) $s['notifications.whatsapp_enabled'];
         $this->whatsapp_driver = (string) $s['whatsapp.driver'];
         $this->default_country_code = (string) $s['whatsapp.default_country_code'];
@@ -202,6 +205,7 @@ class SystemSettings extends Component
             'meta_token' => [Rule::requiredIf($this->whatsapp_enabled && $this->whatsapp_driver === 'meta' && ! Settings::hasSecret('whatsapp.meta_token')), 'nullable', 'string', 'max:1000'],
             'meta_template' => [Rule::requiredIf($this->whatsapp_driver === 'meta'), 'nullable', 'string', 'max:100'],
             'meta_language' => ['nullable', 'string', 'max:10'],
+            'admin_inbox' => ['nullable', 'email', 'max:255'],
             'twilio_sid' => [Rule::requiredIf($this->whatsapp_enabled && $this->whatsapp_driver === 'twilio'), 'nullable', 'regex:/^AC[a-zA-Z0-9]{32}$/'],
             'twilio_token' => [Rule::requiredIf($this->whatsapp_enabled && $this->whatsapp_driver === 'twilio' && ! Settings::hasSecret('whatsapp.twilio_token')), 'nullable', 'string', 'max:200'],
             'twilio_from' => [Rule::requiredIf($this->whatsapp_enabled && $this->whatsapp_driver === 'twilio'), 'nullable', 'string', 'max:40'],
@@ -213,6 +217,7 @@ class SystemSettings extends Component
 
         Settings::set([
             'notifications.email_enabled' => $this->email_enabled,
+            'notifications.admin_inbox' => $this->admin_inbox ?: null,
             'notifications.whatsapp_enabled' => $this->whatsapp_enabled,
             'whatsapp.driver' => $this->whatsapp_driver,
             'whatsapp.default_country_code' => '+'.ltrim($this->default_country_code, '+'),

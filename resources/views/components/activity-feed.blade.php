@@ -9,7 +9,7 @@
                 <p class="text-slate-700">
                     <span class="font-medium text-slate-900">{{ $activity->user?->name ?? 'System' }}</span>
                     @if ($activity->subject_type === (new \App\Models\Task)->getMorphClass() && $activity->subject)
-                        {{ \Illuminate\Support\Str::before($activity->description, '"') }}<a href="{{ route('tasks.show', $activity->subject_id) }}" wire:navigate class="font-medium text-indigo-600 hover:underline">{{ \Illuminate\Support\Str::between($activity->description, '"', '"') }}</a>{{ \Illuminate\Support\Str::afterLast($activity->description, '"') }}
+                        {{ \Illuminate\Support\Str::before($activity->description, '"') }}<a href="{{ route('tasks.show', $activity->subject_id) }}" wire:navigate.hover class="font-medium text-indigo-600 hover:underline">{{ \Illuminate\Support\Str::between($activity->description, '"', '"') }}</a>{{ \Illuminate\Support\Str::afterLast($activity->description, '"') }}
                     @else
                         {{ $activity->description }}
                     @endif

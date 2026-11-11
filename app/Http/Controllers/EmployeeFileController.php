@@ -16,7 +16,7 @@ class EmployeeFileController extends Controller
         abort_unless($user->avatar_path && Storage::disk('local')->exists($user->avatar_path), 404);
 
         return Storage::disk('local')->response($user->avatar_path, null, [
-            'Cache-Control' => 'private, max-age=86400',
+            'Cache-Control' => 'private, max-age=31536000, immutable',
             'X-Content-Type-Options' => 'nosniff',
         ]);
     }

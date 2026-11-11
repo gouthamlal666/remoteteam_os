@@ -35,7 +35,7 @@
                             </div>
                             <div class="mt-1 space-y-1">
                                 @foreach ($items as $m)
-                                    <a href="{{ route('meetings.show', $m) }}" wire:navigate
+                                    <a href="{{ route('meetings.show', $m) }}" wire:navigate.hover
                                        @class(['block truncate rounded px-1.5 py-0.5 text-xs', 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100' => $m->status === 'scheduled', 'bg-emerald-50 text-emerald-700' => $m->status === 'completed', 'bg-slate-100 text-slate-400 line-through' => $m->status === 'cancelled'])>
                                         {{ $m->starts_at->format('H:i') }} {{ $m->title }}
                                     </a>

@@ -22,7 +22,7 @@
             </div>
             <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-2">
-                    <a href="{{ route('clients.index') }}" wire:navigate class="text-sm text-slate-500 hover:text-slate-700">Clients</a>
+                    <a href="{{ route('clients.index') }}" wire:navigate.hover class="text-sm text-slate-500 hover:text-slate-700">Clients</a>
                     <span class="text-slate-300">/</span>
                     <x-badge :color="$client->statusBadge()">{{ $client->statusLabel() }}</x-badge>
                     @if ($client->industry) <x-badge>{{ $client->industry }}</x-badge> @endif
@@ -140,12 +140,12 @@
 
                 <x-card title="Active projects">
                     <x-slot:actions>
-                        <a href="{{ route('projects.index', ['client' => $client->id, 'new' => 1]) }}" wire:navigate class="text-sm font-medium text-indigo-600 hover:underline">+ New project</a>
+                        <a href="{{ route('projects.index', ['client' => $client->id, 'new' => 1]) }}" wire:navigate.hover class="text-sm font-medium text-indigo-600 hover:underline">+ New project</a>
                     </x-slot:actions>
                     <ul class="divide-y divide-slate-100">
                         @forelse ($projects->where('status', '!=', \App\Enums\ProjectStatus::Completed)->take(5) as $p)
                             <li>
-                                <a href="{{ route('projects.show', $p) }}" wire:navigate class="block px-4 py-3 hover:bg-slate-50">
+                                <a href="{{ route('projects.show', $p) }}" wire:navigate.hover class="block px-4 py-3 hover:bg-slate-50">
                                     <div class="flex justify-between text-sm"><span class="font-medium text-slate-900">{{ $p->name }}</span><span class="text-xs text-slate-500">{{ $p->progress() }}%</span></div>
                                     <x-progress :value="$p->progress()" class="mt-2" />
                                 </a>
@@ -279,11 +279,11 @@
     {{-- ───────── Projects ───────── --}}
     @if ($tab === 'projects')
         <div class="flex justify-end">
-            <a href="{{ route('projects.index', ['client' => $client->id, 'new' => 1]) }}" wire:navigate class="btn-primary"><x-icon name="plus" class="size-4" /> New project for {{ $client->name }}</a>
+            <a href="{{ route('projects.index', ['client' => $client->id, 'new' => 1]) }}" wire:navigate.hover class="btn-primary"><x-icon name="plus" class="size-4" /> New project for {{ $client->name }}</a>
         </div>
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             @forelse ($projects as $p)
-                <a wire:key="cp-{{ $p->id }}" href="{{ route('projects.show', $p) }}" wire:navigate class="rounded-xl border border-t-4 border-slate-200 bg-white p-4 hover:shadow-md {{ \App\Support\Palette::bar($p->color) }}">
+                <a wire:key="cp-{{ $p->id }}" href="{{ route('projects.show', $p) }}" wire:navigate.hover class="rounded-xl border border-t-4 border-slate-200 bg-white p-4 hover:shadow-md {{ \App\Support\Palette::bar($p->color) }}">
                     <div class="flex items-start justify-between gap-2">
                         <p class="font-semibold text-slate-900">{{ $p->name }}</p>
                         <x-badge :color="$p->status->badge()">{{ $p->status->label() }}</x-badge>

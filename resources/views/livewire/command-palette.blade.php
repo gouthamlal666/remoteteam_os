@@ -25,7 +25,7 @@
                 @forelse (collect($results)->groupBy('group') as $group => $items)
                     <p class="px-3 pt-2 pb-1 text-xs font-semibold tracking-wide text-slate-400 uppercase">{{ $group }}</p>
                     @foreach ($items as $r)
-                        <a href="{{ $r['url'] }}" wire:navigate data-result data-url="{{ $r['url'] }}" x-on:click="open = false"
+                        <a href="{{ $r['url'] }}" wire:navigate.hover data-result data-url="{{ $r['url'] }}" x-on:click="open = false"
                            x-on:mouseenter="active = {{ $i }}"
                            :class="active === {{ $i }} ? 'bg-indigo-50' : ''"
                            class="flex items-center gap-3 rounded-lg px-3 py-2">

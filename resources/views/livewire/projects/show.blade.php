@@ -4,13 +4,13 @@
         <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div class="min-w-0">
                 <div class="flex flex-wrap items-center gap-2">
-                    <a href="{{ route('projects.index') }}" wire:navigate class="text-sm text-slate-500 hover:text-slate-700">Projects</a>
+                    <a href="{{ route('projects.index') }}" wire:navigate.hover class="text-sm text-slate-500 hover:text-slate-700">Projects</a>
                     <span class="text-slate-300">/</span>
                     <x-badge :color="$project->status->badge()">{{ $project->status->label() }}</x-badge>
                 </div>
 <div class="mt-1 flex items-center gap-2">
                     @if ($project->client) <x-client-logo :client="$project->client" size="size-8 text-xs" /> @endif
-                    <a href="{{ $project->client && auth()->user()->can('view', $project->client) ? route('clients.show', $project->client) : route('projects.index', ['client' => $project->client_id ?? 'internal']) }}" wire:navigate class="block text-2xl font-bold text-slate-900 hover:text-indigo-700" title="{{ $project->client ? 'Open client' : 'All internal projects' }}">{{ $project->clientName() }}</a>
+                    <a href="{{ $project->client && auth()->user()->can('view', $project->client) ? route('clients.show', $project->client) : route('projects.index', ['client' => $project->client_id ?? 'internal']) }}" wire:navigate.hover class="block text-2xl font-bold text-slate-900 hover:text-indigo-700" title="{{ $project->client ? 'Open client' : 'All internal projects' }}">{{ $project->clientName() }}</a>
                 </div>
                 <h2 class="text-lg font-semibold text-slate-600">{{ $project->name }}</h2>
                 <p class="text-sm text-slate-500">
@@ -45,7 +45,7 @@
 
     {{-- Board --}}
     <div class="-mx-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6">
-        <div class="grid min-w-[1000px] grid-cols-5 gap-3">
+        <div class="grid min-w-[1200px] grid-cols-6 gap-3">
             @foreach ($columns as $key => $column)
                 <div wire:key="col-{{ $key }}" class="rounded-xl bg-slate-100/70 p-2">
                     <div class="flex items-center justify-between px-2 py-1.5">
@@ -61,7 +61,7 @@
                                         class="absolute top-2 right-2 z-10 hidden rounded bg-white p-1 text-slate-400 ring-1 ring-slate-200 group-hover/task:block hover:text-red-600 [&_*]:pointer-events-none"
                                         aria-label="Delete {{ $task->title }}"><x-icon name="trash" class="size-3.5" /></button>
                             @endif
-                            <a href="{{ route('tasks.show', $task) }}" wire:navigate
+                            <a href="{{ route('tasks.show', $task) }}" wire:navigate.hover
                                class="block cursor-grab rounded-lg border border-slate-200 bg-white p-3 pr-8 shadow-xs hover:border-indigo-300 active:cursor-grabbing">
                                 <p class="text-sm font-medium text-slate-900">{{ $task->title }}</p>
                                 <div class="mt-2 flex flex-wrap items-center gap-1.5">
@@ -98,7 +98,7 @@
             <ul class="divide-y divide-slate-100">
                 @forelse ($project->members as $member)
                     <li wire:key="pm-{{ $member->id }}" class="group/member flex items-center hover:bg-slate-50">
-                        <a href="{{ route('users.show', $member) }}" wire:navigate class="flex min-w-0 flex-1 items-center gap-3 px-4 py-2.5">
+                        <a href="{{ route('users.show', $member) }}" wire:navigate.hover class="flex min-w-0 flex-1 items-center gap-3 px-4 py-2.5">
                             <x-avatar :user="$member" />
                             <div class="min-w-0">
                                 <p class="truncate text-sm font-medium text-slate-900">{{ $member->name }}</p>

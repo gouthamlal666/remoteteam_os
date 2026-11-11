@@ -38,9 +38,9 @@
                 </div>
                 <div class="flex items-center gap-2">
                     @if ($selectedClient && auth()->user()->can('view', $selectedClient))
-                        <a href="{{ route('clients.show', $selectedClient) }}" wire:navigate class="btn-secondary py-1.5">Client profile</a>
+                        <a href="{{ route('clients.show', $selectedClient) }}" wire:navigate.hover class="btn-secondary py-1.5">Client profile</a>
                     @endif
-                    <a href="{{ route('tasks.index', ['client' => $client, 'scope' => 'all']) }}" wire:navigate class="btn-secondary py-1.5">View all tasks</a>
+                    <a href="{{ route('tasks.index', ['client' => $client, 'scope' => 'all']) }}" wire:navigate.hover class="btn-secondary py-1.5">View all tasks</a>
                     <button wire:click="clearClient" class="btn-secondary py-1.5"><x-icon name="x" class="size-4" /> All clients</button>
                 </div>
             </div>
@@ -62,7 +62,7 @@
                     <ul class="divide-y divide-slate-100 rounded-lg border border-slate-100">
                         @forelse ($clientSummary['openTasks'] as $task)
                             <li wire:key="ct-{{ $task->id }}">
-                                <a href="{{ route('tasks.show', $task) }}" wire:navigate class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50">
+                                <a href="{{ route('tasks.show', $task) }}" wire:navigate.hover class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50">
                                     <span class="size-2 shrink-0 rounded-full {{ \App\Support\Palette::dot($task->project->color) }}"></span>
                                     <span class="min-w-0 flex-1">
                                         <span class="block truncate text-sm font-medium text-slate-900">{{ $task->title }}</span>
@@ -77,7 +77,7 @@
                         @endforelse
                     </ul>
                     @if ($clientSummary['open'] > $clientSummary['openTasks']->count())
-                        <a href="{{ route('tasks.index', ['client' => $client, 'scope' => 'all', 'status' => 'open']) }}" wire:navigate class="mt-2 inline-block text-sm text-indigo-600 hover:underline">See all {{ $clientSummary['open'] }} open tasks →</a>
+                        <a href="{{ route('tasks.index', ['client' => $client, 'scope' => 'all', 'status' => 'open']) }}" wire:navigate.hover class="mt-2 inline-block text-sm text-indigo-600 hover:underline">See all {{ $clientSummary['open'] }} open tasks →</a>
                     @endif
                 </div>
             </div>
@@ -104,7 +104,7 @@
                         </div>
                         <h3 class="mt-0.5 truncate text-sm font-medium text-slate-600 group-hover:text-indigo-700">
                             {{-- Stretched link: the whole card opens the project --}}
-                            <a href="{{ route('projects.show', $project) }}" wire:navigate class="after:absolute after:inset-0 after:rounded-xl">{{ $project->name }}</a>
+                            <a href="{{ route('projects.show', $project) }}" wire:navigate.hover class="after:absolute after:inset-0 after:rounded-xl">{{ $project->name }}</a>
                         </h3>
                         @if ($project->department)
                             <p class="truncate text-xs text-slate-400">{{ $project->department->name }}</p>

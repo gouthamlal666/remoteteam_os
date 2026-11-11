@@ -17,7 +17,7 @@ class ClientFileController extends Controller
         abort_unless($client->logo_path && Storage::disk('local')->exists($client->logo_path), 404);
 
         return Storage::disk('local')->response($client->logo_path, null, [
-            'Cache-Control' => 'private, max-age=86400',
+            'Cache-Control' => 'private, max-age=31536000, immutable',
             'X-Content-Type-Options' => 'nosniff',
         ]);
     }

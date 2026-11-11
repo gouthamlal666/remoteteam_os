@@ -7,7 +7,7 @@
     ];
 @endphp
 <div class="mx-auto max-w-5xl">
-    <p class="mb-5 text-sm text-slate-500">Organisation-wide settings. Only super admins can see this page. Personal preferences are in <a href="{{ route('settings') }}" wire:navigate class="text-indigo-600 hover:underline">My settings</a>.</p>
+    <p class="mb-5 text-sm text-slate-500">Organisation-wide settings. Only super admins can see this page. Personal preferences are in <a href="{{ route('settings') }}" wire:navigate.hover class="text-indigo-600 hover:underline">My settings</a>.</p>
 
     <div class="grid gap-6 lg:grid-cols-[14rem_1fr]">
         {{-- Tabs --}}
@@ -133,6 +133,12 @@
                                 <span class="text-sm"><span class="block font-medium text-slate-800">Email notifications</span><span class="text-slate-500">Important alerts by email. People can still opt out individually.
                                     @if (config('mail.default') === 'log') <span class="text-amber-700">Mail is in log mode: emails are written to the log until MAIL_* is configured in .env.</span> @endif</span></span>
                             </label>
+                            <div class="space-y-1 p-5">
+                                <x-field label="Admin inbox" for="ss-admin-inbox" error="admin_inbox">
+                                    <input wire:model="admin_inbox" id="ss-admin-inbox" type="email" class="input max-w-md" placeholder="admin@yourcompany.com">
+                                </x-field>
+                                <p class="text-xs text-slate-500">Emails meant for admins and the super admin (task submitted, leave requested, messages from members…) all go to this one inbox, once each. Members always get emails at their own address. Leave empty to email each admin at their own address.</p>
+                            </div>
                             <label class="flex items-start gap-3 p-5">
                                 <input wire:model.live="whatsapp_enabled" type="checkbox" class="mt-0.5 rounded border-slate-300 text-emerald-600">
                                 <span class="text-sm"><span class="block font-medium text-slate-800">WhatsApp notifications</span><span class="text-slate-500">People opt in from My settings with their mobile number. {{ $optedIn }} {{ str('person')->plural($optedIn) }} opted in so far.</span></span>

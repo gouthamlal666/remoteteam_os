@@ -53,7 +53,7 @@
         <nav class="flex-1 space-y-1 overflow-y-auto p-3">
             @foreach ($nav as $item)
                 @php $active = request()->routeIs($item['match']); @endphp
-                <a href="{{ route($item['route']) }}" wire:navigate
+                <a href="{{ route($item['route']) }}" wire:navigate.hover
                    @class([
                        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium',
                        'bg-indigo-50 text-indigo-700' => $active,
@@ -69,7 +69,7 @@
         </nav>
 
         <div class="border-t border-slate-100 p-3">
-            <a href="{{ route('users.show', $user) }}" wire:navigate class="flex items-center gap-3 rounded-lg p-2 hover:bg-slate-50">
+            <a href="{{ route('users.show', $user) }}" wire:navigate.hover class="flex items-center gap-3 rounded-lg p-2 hover:bg-slate-50">
                 <x-avatar :user="$user" size="size-9" presence />
                 <div class="min-w-0 flex-1">
                     <p class="truncate text-sm font-medium text-slate-900">{{ $user->name }}</p>

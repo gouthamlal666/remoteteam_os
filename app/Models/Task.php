@@ -72,12 +72,12 @@ class Task extends Model
     }
 
     /**
-     * Overdue is derived rather than stored: any unfinished task whose
-     * deadline has passed. This keeps it accurate without a scheduler.
+     * Overdue is derived rather than stored: any unfinished task (not on hold)
+     * whose deadline has passed. This keeps it accurate without a scheduler.
      */
     public function isOverdue(): bool
     {
-        return $this->status !== TaskStatus::Completed
+        return ! in_array($this->status, [TaskStatus::Completed, TaskStatus::OnHold], true)
             && $this->deadline !== null
             && $this->deadline->lt(today());
     }
@@ -95,7 +95,7 @@ class Task extends Model
 
     public function scopeOverdue(Builder $query): void
     {
-        $query->where('status', '!=', TaskStatus::Completed->value)
+        $query->whereNotIn('status', [TaskStatus::Completed->value, TaskStatus::OnHold->value])
             ->whereDate('deadline', '<', today());
     }
 

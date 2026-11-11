@@ -22,7 +22,7 @@
                     <a href="{{ route('chat.with', $user) }}" class="btn-primary py-1.5"><x-icon name="chat" class="size-4" /> Message</a>
                 @endcan
                 @if ($user->is(auth()->user()))
-                    <a href="{{ route('settings') }}" wire:navigate class="btn-secondary py-1.5">Edit profile & status</a>
+                    <a href="{{ route('settings') }}" wire:navigate.hover class="btn-secondary py-1.5">Edit profile & status</a>
                 @endif
                 @can('manageEmployeeRecord', $user)
                     <a href="#employee" class="btn-secondary py-1.5"><x-icon name="id-card" class="size-4 text-indigo-500" /> Employee record</a>
@@ -68,7 +68,7 @@
             <ul class="divide-y divide-slate-100">
                 @forelse ($currentTasks as $task)
                     <li>
-                        <a href="{{ route('tasks.show', $task) }}" wire:navigate class="flex items-center gap-3 px-4 py-3 hover:bg-slate-50">
+                        <a href="{{ route('tasks.show', $task) }}" wire:navigate.hover class="flex items-center gap-3 px-4 py-3 hover:bg-slate-50">
                             <div class="min-w-0 flex-1">
                                 <p class="truncate text-sm font-medium text-slate-900">{{ $task->title }}</p>
                                 <p class="text-xs text-slate-500">{{ $task->project->name }}</p>
@@ -86,7 +86,7 @@
             <ul class="divide-y divide-slate-100">
                 @forelse ($projects as $project)
                     <li>
-                        <a href="{{ route('projects.show', $project) }}" wire:navigate class="block px-4 py-3 hover:bg-slate-50">
+                        <a href="{{ route('projects.show', $project) }}" wire:navigate.hover class="block px-4 py-3 hover:bg-slate-50">
                             <div class="flex justify-between text-sm">
                                 <span class="font-medium text-slate-900">{{ $project->name }}</span>
                                 <span class="text-xs text-slate-500">{{ $project->progress() }}%</span>

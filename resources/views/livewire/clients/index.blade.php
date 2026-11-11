@@ -17,7 +17,7 @@
 
     <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         @forelse ($clients as $client)
-            <a wire:key="client-{{ $client->id }}" href="{{ route('clients.show', $client) }}" wire:navigate
+            <a wire:key="client-{{ $client->id }}" href="{{ route('clients.show', $client) }}" wire:navigate.hover
                class="group flex flex-col rounded-xl border border-slate-200 bg-white p-4 transition hover:border-indigo-300 hover:shadow-md">
                 <div class="flex items-start gap-3">
                     <x-client-logo :client="$client" size="size-12 text-base" />

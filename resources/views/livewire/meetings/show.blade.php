@@ -8,11 +8,11 @@
     <div class="space-y-6 lg:col-span-2">
         <div class="rounded-xl border border-slate-200 bg-white p-5">
             <div class="flex flex-wrap items-center gap-2 text-sm">
-                <a href="{{ route('meetings.index') }}" wire:navigate class="text-slate-500 hover:text-slate-700">Meetings</a>
+                <a href="{{ route('meetings.index') }}" wire:navigate.hover class="text-slate-500 hover:text-slate-700">Meetings</a>
                 <span class="text-slate-300">/</span>
                 <x-badge :color="$statusBadge">{{ $statusLabel }}</x-badge>
                 @if ($meeting->project)
-                    <a href="{{ route('projects.show', $meeting->project) }}" wire:navigate><x-badge color="bg-indigo-50 text-indigo-700">{{ $meeting->project->name }}</x-badge></a>
+                    <a href="{{ route('projects.show', $meeting->project) }}" wire:navigate.hover><x-badge color="bg-indigo-50 text-indigo-700">{{ $meeting->project->name }}</x-badge></a>
                 @endif
             </div>
             <h2 class="mt-2 text-2xl font-semibold text-slate-900">{{ $meeting->title }}</h2>

@@ -3,7 +3,7 @@
     [$label, $badge] = $meeting->displayStatus();
     $mine = $meeting->participants->firstWhere('id', $user->id)?->pivot;
 @endphp
-<a {{ $attributes->merge(['class' => 'flex items-center gap-4 px-4 py-3 hover:bg-slate-50']) }} href="{{ route('meetings.show', $meeting) }}" wire:navigate>
+<a {{ $attributes->merge(['class' => 'flex items-center gap-4 px-4 py-3 hover:bg-slate-50']) }} href="{{ route('meetings.show', $meeting) }}" wire:navigate.hover>
     <div class="w-14 shrink-0 rounded-lg border border-slate-200 text-center">
         <p class="rounded-t-lg bg-indigo-600 text-[10px] font-semibold text-white uppercase">{{ $meeting->starts_at->format('M') }}</p>
         <p class="py-0.5 text-lg font-semibold text-slate-900">{{ $meeting->starts_at->format('d') }}</p>

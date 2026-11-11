@@ -11,7 +11,7 @@
                 <button wire:click="$set('tab', '{{ $key }}')" @class(['rounded-md px-3 py-1.5 font-medium', 'bg-indigo-600 text-white' => $tab === $key, 'text-slate-600 hover:bg-slate-50' => $tab !== $key])>{{ $label }}</button>
             @endforeach
         </div>
-        <a href="{{ route('leave.index') }}" wire:navigate class="btn-secondary">🌴 {{ $user->tracksAttendance() ? 'Apply for leave' : 'Manage leave' }}</a>
+        <a href="{{ route('leave.index') }}" wire:navigate.hover class="btn-secondary">🌴 {{ $user->tracksAttendance() ? 'Apply for leave' : 'Manage leave' }}</a>
     </div>
     <p class="text-xs text-slate-500">People are marked present automatically the first time they use the system each day (super admins are not tracked). Days off: all {{ collect(\App\Support\Settings::workingDays())->count() < 7 ? 'Sundays' : '' }}{{ $saturdayRule ? ', the '.$saturdayRule.' Saturday of every month' : '' }} and holidays. Late = signed in more than {{ \App\Support\Settings::get('work.late_grace_minutes') }} min after your start time.</p>
 

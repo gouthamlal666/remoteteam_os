@@ -14,7 +14,7 @@
              x-init="setInterval(() => now = Math.floor(Date.now() / 1000), 1000)"
              class="flex items-center gap-2 rounded-lg bg-emerald-50 py-1 pr-1 pl-2.5 text-sm text-emerald-800">
             <span class="relative flex size-2"><span class="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex size-2 rounded-full bg-emerald-500"></span></span>
-            <a href="{{ route('tasks.show', $timer->task_id) }}" wire:navigate class="hidden max-w-40 truncate hover:underline sm:inline">{{ $timer->task->title }}</a>
+            <a href="{{ route('tasks.show', $timer->task_id) }}" wire:navigate.hover class="hidden max-w-40 truncate hover:underline sm:inline">{{ $timer->task->title }}</a>
             <span class="font-mono tabular-nums" x-text="label"></span>
             <button wire:click="stopTimer" class="rounded-md bg-emerald-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-emerald-500">Stop</button>
         </div>
@@ -64,7 +64,7 @@
                     <li><x-empty class="py-8">You're all caught up 🎉</x-empty></li>
                 @endforelse
             </ul>
-            <a href="{{ route('notifications') }}" wire:navigate class="block border-t border-slate-100 px-4 py-2.5 text-center text-xs font-medium text-indigo-600 hover:bg-slate-50">View all</a>
+            <a href="{{ route('notifications') }}" wire:navigate.hover class="block border-t border-slate-100 px-4 py-2.5 text-center text-xs font-medium text-indigo-600 hover:bg-slate-50">View all</a>
         </div>
     </div>
 </div>

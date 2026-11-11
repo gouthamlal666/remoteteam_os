@@ -83,7 +83,7 @@
                     <div class="flex items-center gap-3">
                         <x-avatar :user="$person" />
                         <div class="min-w-0 flex-1">
-                            <a href="{{ route('users.show', $person) }}" wire:navigate class="text-sm font-medium text-slate-900 hover:text-indigo-700">{{ $person->name }}</a>
+                            <a href="{{ route('users.show', $person) }}" wire:navigate.hover class="text-sm font-medium text-slate-900 hover:text-indigo-700">{{ $person->name }}</a>
                             <p class="text-xs text-slate-500">{{ $person->job_title }}{{ $person->department ? ' · '.$person->department->name : '' }}</p>
                         </div>
                         @if ($r)
@@ -153,12 +153,12 @@
                                 <td class="px-4 py-3 tabular-nums">{{ rtrim(rtrim(number_format($row['hours'], 1), '0'), '.') ?: 0 }} <span class="text-slate-400">/ {{ \App\Models\TimeEntry::format($row['tracked_minutes']) }}</span></td>
                                 <td class="px-4 py-3">
                                     @forelse ($row['completed'] as $t)
-                                        <a href="{{ route('tasks.show', $t->id) }}" wire:navigate class="block truncate text-slate-700 hover:text-indigo-700">✓ {{ $t->title }} @unless ($t->completedOnTime()) <span class="text-xs text-red-600">(late)</span> @endunless</a>
+                                        <a href="{{ route('tasks.show', $t->id) }}" wire:navigate.hover class="block truncate text-slate-700 hover:text-indigo-700">✓ {{ $t->title }} @unless ($t->completedOnTime()) <span class="text-xs text-red-600">(late)</span> @endunless</a>
                                     @empty <span class="text-slate-400">—</span> @endforelse
                                 </td>
                                 <td class="px-4 py-3">
                                     @forelse ($row['overdue'] as $t)
-                                        <a href="{{ route('tasks.show', $t->id) }}" wire:navigate class="block truncate text-red-600 hover:underline">{{ $t->title }}</a>
+                                        <a href="{{ route('tasks.show', $t->id) }}" wire:navigate.hover class="block truncate text-red-600 hover:underline">{{ $t->title }}</a>
                                     @empty <span class="text-slate-400">—</span> @endforelse
                                 </td>
                                 <td class="max-w-xs px-4 py-3">
@@ -197,7 +197,7 @@
                     <tbody class="divide-y divide-slate-100">
                         @forelse ($people as $p)
                             <tr wire:key="perf-{{ $p['user']->id }}" class="hover:bg-slate-50">
-                                <td class="px-4 py-3"><a href="{{ route('users.show', $p['user']) }}" wire:navigate class="flex items-center gap-2"><x-avatar :user="$p['user']" size="size-7" /><span class="font-medium text-slate-900">{{ $p['user']->name }}</span></a></td>
+                                <td class="px-4 py-3"><a href="{{ route('users.show', $p['user']) }}" wire:navigate.hover class="flex items-center gap-2"><x-avatar :user="$p['user']" size="size-7" /><span class="font-medium text-slate-900">{{ $p['user']->name }}</span></a></td>
                                 <td class="px-4 py-3"><div class="flex items-center gap-2"><x-progress :value="$p['completion_rate']" /><span class="w-9 text-right text-xs tabular-nums">{{ $p['completion_rate'] }}%</span></div></td>
                                 <td class="px-4 py-3 text-right tabular-nums">{{ $p['assigned'] }}</td>
                                 <td class="px-4 py-3 text-right tabular-nums text-emerald-600">{{ $p['completed'] }}</td>

@@ -80,7 +80,7 @@
                             @foreach ($items->take(3) as $item)
                                 @if ($item['type'] === 'meeting')
                                     @php $m = $item['model']; @endphp
-                                    <a href="{{ route('meetings.show', $m) }}" wire:navigate x-on:click.stop
+                                    <a href="{{ route('meetings.show', $m) }}" wire:navigate.hover x-on:click.stop
                                        @class([
                                            'flex items-center gap-1 truncate rounded px-1.5 py-0.5 text-[11px] font-medium',
                                            'bg-slate-100 text-slate-400 line-through' => $m->status === 'cancelled',
@@ -94,7 +94,7 @@
                                     </a>
                                 @else
                                     @php $t = $item['model']; @endphp
-                                    <a href="{{ route('tasks.show', $t) }}" wire:navigate x-on:click.stop
+                                    <a href="{{ route('tasks.show', $t) }}" wire:navigate.hover x-on:click.stop
                                        class="block truncate rounded px-1.5 py-0.5 text-[11px] font-medium {{ $taskColor($t) }} hover:brightness-95"
                                        title="Due: {{ $t->title }} ({{ $t->project->name }})">{{ $t->title }}</a>
                                 @endif
@@ -142,7 +142,7 @@
                 @foreach ($dayMeetings as $m)
                     @php [$label, $badge] = $m->displayStatus(); @endphp
                     <li wire:key="ag-m-{{ $m->id }}">
-                        <a href="{{ route('meetings.show', $m) }}" wire:navigate @class(['flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-slate-50', 'bg-red-50/70' => $m->isLive()])>
+                        <a href="{{ route('meetings.show', $m) }}" wire:navigate.hover @class(['flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-slate-50', 'bg-red-50/70' => $m->isLive()])>
                             <span class="w-16 shrink-0 text-xs font-medium tabular-nums text-slate-500">{{ $m->starts_at->format('h:i A') }}</span>
                             <span class="h-9 w-1 shrink-0 rounded-full {{ $m->status === 'cancelled' ? 'bg-slate-300' : 'bg-indigo-500' }}"></span>
                             <span class="min-w-0 flex-1">
@@ -161,7 +161,7 @@
                 @endforeach
                 @foreach ($dayTasks as $t)
                     <li wire:key="ag-t-{{ $t->id }}">
-                        <a href="{{ route('tasks.show', $t) }}" wire:navigate class="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-slate-50">
+                        <a href="{{ route('tasks.show', $t) }}" wire:navigate.hover class="flex items-center gap-3 rounded-lg px-2 py-2 hover:bg-slate-50">
                             <span class="w-16 shrink-0 text-xs font-medium text-slate-500">Due</span>
                             <span class="h-9 w-1 shrink-0 rounded-full {{ $t->status === $done ? 'bg-emerald-400' : ($t->isOverdue() ? 'bg-red-500' : 'bg-amber-400') }}"></span>
                             <span class="min-w-0 flex-1">
@@ -179,7 +179,7 @@
                     </li>
                 @endif
             </ul>
-            <a href="{{ route('meetings.index', ['view' => 'calendar', 'month' => $monthStart->format('Y-m')]) }}" wire:navigate class="mt-auto block border-t border-slate-100 px-4 py-3 text-center text-xs font-medium text-indigo-600 hover:bg-slate-50">Open meetings calendar →</a>
+            <a href="{{ route('meetings.index', ['view' => 'calendar', 'month' => $monthStart->format('Y-m')]) }}" wire:navigate.hover class="mt-auto block border-t border-slate-100 px-4 py-3 text-center text-xs font-medium text-indigo-600 hover:bg-slate-50">Open meetings calendar →</a>
         </aside>
     </div>
 </section>

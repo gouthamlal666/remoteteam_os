@@ -39,6 +39,15 @@ class Show extends Component
 
     public string $logNote = '';
 
+    // Repeat dialog
+    public bool $showRepeat = false;
+
+    public string $repeatStart = '';
+
+    public string $repeatDeadline = '';
+
+    public bool $repeatChecklist = true;
+
     public function mount(Task $task): void
     {
         $this->authorize('view', $task);
@@ -127,10 +136,48 @@ class Show extends Component
     public function start(TaskService $tasks): void
     {
         $this->authorize('updateStatus', $this->task);
-        abort_unless(in_array($this->task->status, [TaskStatus::Todo, TaskStatus::Revision], true), 422);
+        abort_unless(in_array($this->task->status, [TaskStatus::Todo, TaskStatus::Revision, TaskStatus::OnHold], true), 422);
 
         $tasks->changeStatus(auth()->user(), $this->task, TaskStatus::InProgress);
         $this->dispatch('notify', message: 'Task started.');
+    }
+
+    // ── Repeat ─────────────────────────────────────────────────
+
+    public function openRepeat(): void
+    {
+        $this->authorize('create', [Task::class, $this->task->project]);
+        $this->shiftRepeat('week');
+        $this->repeatChecklist = true;
+        $this->resetValidation();
+        $this->showRepeat = true;
+    }
+
+    /** Fills the new dates by moving the original ones forward (keeps the same length). */
+    public function shiftRepeat(string $by): void
+    {
+        $move = fn (?Carbon $date) => $date ? (match ($by) {
+            'day' => $date->copy()->addDay(),
+            'month' => $date->copy()->addMonthNoOverflow(),
+            default => $date->copy()->addWeek(),
+        })->toDateString() : '';
+
+        $this->repeatStart = $move($this->task->start_date);
+        $this->repeatDeadline = $move($this->task->deadline);
+    }
+
+    public function repeat(TaskService $tasks)
+    {
+        $this->authorize('create', [Task::class, $this->task->project]);
+        $this->validate([
+            'repeatStart' => ['nullable', 'date'],
+            'repeatDeadline' => ['nullable', 'date', 'after_or_equal:repeatStart'],
+        ], [], ['repeatStart' => 'start date', 'repeatDeadline' => 'deadline']);
+
+        $copy = $tasks->repeat(auth()->user(), $this->task, $this->repeatStart, $this->repeatDeadline, $this->repeatChecklist);
+        session()->flash('status', 'Task repeated. This is the new copy.');
+
+        return $this->redirectRoute('tasks.show', $copy, navigate: true);
     }
 
     public function openDialog(string $dialog): void

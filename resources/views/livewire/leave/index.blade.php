@@ -16,7 +16,7 @@
             @endforeach
         </div>
         <div class="flex gap-2">
-            <a href="{{ route('attendance.index', ['tab' => 'holidays']) }}" wire:navigate class="btn-secondary"><x-icon name="calendar" class="size-4" /> Holidays</a>
+            <a href="{{ route('attendance.index', ['tab' => 'holidays']) }}" wire:navigate.hover class="btn-secondary"><x-icon name="calendar" class="size-4" /> Holidays</a>
             @if ($isOwner)
                 <button wire:click="openEntry" class="btn-primary"><x-icon name="plus" class="size-4" /> Add leave</button>
             @else
